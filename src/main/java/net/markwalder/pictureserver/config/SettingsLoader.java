@@ -59,18 +59,17 @@ public final class SettingsLoader {
     }
 
     private static int asPort(Object value) {
-        int port;
-        if (value instanceof Number number) {
-            port = number.intValue();
-        } else if (value instanceof String stringPort) {
-            try {
-                port = Integer.parseInt(stringPort.trim());
-            } catch (NumberFormatException ex) {
-                throw new IllegalStateException("Invalid 'port' in settings.yaml", ex);
+        int port = switch (value) {
+            case Number number -> number.intValue();
+            case String stringPort -> {
+                try {
+                    yield Integer.parseInt(stringPort.trim());
+                } catch (NumberFormatException ex) {
+                    throw new IllegalStateException("Invalid 'port' in settings.yaml", ex);
+                }
             }
-        } else {
-            throw new IllegalStateException("Missing or invalid 'port' in settings.yaml");
-        }
+            default -> throw new IllegalStateException("Missing or invalid 'port' in settings.yaml");
+        };
 
         if (port < 1 || port > 65535) {
             throw new IllegalStateException("Port must be between 1 and 65535");

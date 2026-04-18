@@ -41,10 +41,10 @@ public final class PictureServerHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String method = exchange.getRequestMethod();
-        String path = exchange.getRequestURI().getPath();
+        try (exchange) {
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
 
-        try {
             if ("/login".equals(path)) {
                 handleLogin(exchange, method);
                 return;
@@ -85,10 +85,8 @@ public final class PictureServerHandler implements HttpHandler {
             sendHtml(exchange, 400, htmlRenderer.renderErrorPage(400, ex.getMessage()));
         } catch (SecurityException ex) {
             sendHtml(exchange, 403, htmlRenderer.renderErrorPage(403, ex.getMessage()));
-        } catch (Exception ex) {
+        } catch (IOException | RuntimeException ex) {
             sendHtml(exchange, 500, htmlRenderer.renderErrorPage(500, "Unexpected server error."));
-        } finally {
-            exchange.close();
         }
     }
 

@@ -63,6 +63,10 @@ class SettingsLoaderTest {
                 port: 8080
                 """);
 
-        assertThrows(IllegalStateException.class, () -> SettingsLoader.load(settingsFile, tempDir));
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> SettingsLoader.load(settingsFile, tempDir));
+
+        assertEquals("Missing or invalid 'password' in settings.yaml", exception.getMessage());
     }
 }
