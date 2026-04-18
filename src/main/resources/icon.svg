@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <clipPath id="frame-clip">
+      <rect x="10" y="10" width="100" height="100" rx="14"/>
+    </clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <radialGradient id="sun-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fde68a" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fde68a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Drop shadow base -->
+  <rect x="14" y="17" width="100" height="100" rx="14" fill="#00000022"/>
+
+  <!-- Frame background -->
+  <rect x="10" y="10" width="100" height="100" rx="14" fill="#312e81"/>
+
+  <!-- Scene clipped to frame -->
+  <g clip-path="url(#frame-clip)">
+    <!-- Sky -->
+    <rect x="10" y="10" width="100" height="70" fill="url(#sky)"/>
+
+    <!-- Sun glow halo -->
+    <circle cx="84" cy="40" r="22" fill="url(#sun-glow)"/>
+    <!-- Sun disk -->
+    <circle cx="84" cy="40" r="13" fill="#fde68a"/>
+    <!-- Sun inner highlight -->
+    <circle cx="80" cy="36" r="4" fill="#fef9c3" opacity="0.7"/>
+
+    <!-- Distant mountain (lightest) -->
+    <polygon points="10,110 48,50 82,110" fill="#4338ca"/>
+    <!-- Mid mountain -->
+    <polygon points="30,110 68,44 106,110" fill="#3730a3"/>
+    <!-- Near mountain left (darkest) -->
+    <polygon points="10,110 36,62 62,110" fill="#1e1b4b"/>
+    <!-- Near mountain right -->
+    <polygon points="58,110 90,56 122,110" fill="#1e1b4b"/>
+
+    <!-- Snow cap 1 -->
+    <polygon points="48,50 55,63 41,63" fill="#ede9fe" opacity="0.85"/>
+    <!-- Snow cap 2 -->
+    <polygon points="68,44 76,59 60,59" fill="#ede9fe" opacity="0.7"/>
+
+    <!-- Ground strip -->
+    <rect x="10" y="100" width="100" height="10" fill="#1e1b4b"/>
+  </g>
+
+  <!-- Frame inner border -->
+  <rect x="10" y="10" width="100" height="100" rx="14" fill="none" stroke="#a5b4fc" stroke-width="2" opacity="0.4"/>
+</svg>

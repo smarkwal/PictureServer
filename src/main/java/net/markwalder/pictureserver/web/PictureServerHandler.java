@@ -60,6 +60,11 @@ public final class PictureServerHandler implements HttpHandler {
                 return;
             }
 
+            if ("/icon.svg".equals(path)) {
+                handleIcon(exchange, method);
+                return;
+            }
+
             if (!isAuthenticated(exchange)) {
                 redirect(exchange, "/login?next=" + encodePath(path));
                 return;
@@ -144,6 +149,27 @@ public final class PictureServerHandler implements HttpHandler {
         }
     }
 
+    private void handleIcon(HttpExchange exchange, String method) throws IOException {
+        if (!"GET".equals(method)) {
+            sendHtml(exchange, 405, htmlRenderer.renderErrorPage(405, "Method not allowed."));
+            return;
+        }
+
+        try (InputStream input = PictureServerHandler.class.getResourceAsStream("/icon.svg")) {
+            if (input == null) {
+                sendHtml(exchange, 500, htmlRenderer.renderErrorPage(500, "Missing icon resource."));
+                return;
+            }
+
+            byte[] bytes = input.readAllBytes();
+            exchange.getResponseHeaders().set("Content-Type", "image/svg+xml");
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream output = exchange.getResponseBody()) {
+                output.write(bytes);
+            }
+        }
+    }
+
     private void handleGalleryPath(HttpExchange exchange) throws IOException {
         String requestPath = decodePath(exchange.getRequestURI().getPath());
 
@@ -184,8 +210,8 @@ public final class PictureServerHandler implements HttpHandler {
         }
 
         String normalizedRequestPath = normalizeWebPath(requestPath);
-        String parentPath = parentWebPath(normalizedRequestPath);
-        String html = htmlRenderer.renderAlbumPage(normalizedRequestPath, parentPath, albums, pictures);
+        String albumName = fsPath.getFileName() == null ? "Album" : fsPath.getFileName().toString();
+        String html = htmlRenderer.renderAlbumPage(albumName, normalizedRequestPath, albums, pictures);
         sendHtml(exchange, 200, html);
     }
 
@@ -242,8 +268,7 @@ public final class PictureServerHandler implements HttpHandler {
         }
 
         String normalizedImagePath = normalizeWebPath(imageRequestPath);
-        String parentPath = parentWebPath(normalizedImagePath);
-        sendHtml(exchange, 200, htmlRenderer.renderPicturePage(normalizedImagePath, parentPath, normalizedImagePath));
+        sendHtml(exchange, 200, htmlRenderer.renderPicturePage(normalizedImagePath, normalizedImagePath));
     }
 
     private void sendImage(HttpExchange exchange, Path imagePath) throws IOException {

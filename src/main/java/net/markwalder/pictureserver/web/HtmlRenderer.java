@@ -24,12 +24,10 @@ public final class HtmlRenderer {
                 <head>
                   <meta charset=\"utf-8\">
                   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-                  <title>Picture Server Login</title>
-                  <link rel=\"stylesheet\" href=\"/styles.css\">
+                  <title>Picture Server Login</title>                  <link rel="icon" type="image/svg+xml" href="/icon.svg">                  <link rel=\"stylesheet\" href=\"/styles.css\">
                 </head>
                 <body class=\"page-login\">
-                  <main class=\"card\">
-                    <h1>Picture Server</h1>
+                  <main class=\"card\">                    <img src="/icon.svg" alt="Picture Server" class="app-icon">                    <h1>Picture Server</h1>
                     <p>Please enter your password.</p>
                     %s
                     <form method=\"post\" action=\"/login\">
@@ -44,14 +42,12 @@ public final class HtmlRenderer {
                 """.formatted(errorHtml, HtmlEscaper.escape(next == null ? "/" : next));
     }
 
-    public String renderAlbumPage(String currentPath, String parentPath, List<String> albums, List<String> pictures) {
+    public String renderAlbumPage(String albumName, String currentPath, List<String> albums, List<String> pictures) {
         String grid = new AlbumGridComponent(currentPath, albums, pictures).render();
 
-        String parent = parentPath == null
-            ? "<span class=\"nav-spacer\"></span>"
-                : "<a class=\"back\" href=\"" + HtmlEscaper.escape(parentPath) + "\">← Back to parent album</a>";
         String breadcrumb = new BreadcrumbComponent(currentPath).render();
         boolean isHomePage = currentPath == null || currentPath.isBlank() || "/".equals(currentPath);
+        String title = isHomePage ? "Home" : albumName;
 
         List<UiComponent> menuItems = new java.util.ArrayList<>();
         if (isHomePage) {
@@ -77,29 +73,30 @@ public final class HtmlRenderer {
                 <head>
                   <meta charset=\"utf-8\">
                   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-                  <title>Album</title>
-                  <link rel=\"stylesheet\" href=\"/styles.css\">
+                  <title>%s</title>                  <link rel="icon" type="image/svg+xml" href="/icon.svg">                  <link rel=\"stylesheet\" href=\"/styles.css\">
                 </head>
                 <body class=\"page-album\">
                   <header>
-                    <div class=\"left-nav\">%s</div>
-                    <p class=\"crumbs\">%s</p>
-                    <div class=\"right-nav\">%s</div>
+                    <div class="left-nav"><a href="/"><img src="/icon.svg" alt="Home" class="header-icon"></a></div>
+                    <p class="crumbs">%s</p>
+                    <div class="right-nav">%s</div>
                   </header>
                   %s
                   %s
                 </body>
                 </html>
                 """.formatted(
-                parent,
+                HtmlEscaper.escape(title),
                 breadcrumb,
                 userMenu,
                 grid,
                 confirmationDialog);
     }
 
-    public String renderPicturePage(String displayPath, String parentPath, String imageSrc) {
-        String parent = parentPath == null ? "/" : parentPath;
+    public String renderPicturePage(String displayPath, String imageSrc) {
+        String fileName = displayPath.contains("/")
+                ? displayPath.substring(displayPath.lastIndexOf('/') + 1)
+                : displayPath;
         String breadcrumb = new BreadcrumbComponent(displayPath).render();
         List<UiComponent> menuItems = List.of(
                 new MenuDialogItemComponent("Delete", "delete-dialog", true),
@@ -120,24 +117,22 @@ public final class HtmlRenderer {
                 <head>
                   <meta charset=\"utf-8\">
                   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-                  <title>%s</title>
-                  <link rel=\"stylesheet\" href=\"/styles.css\">
+                  <title>%s</title>                  <link rel="icon" type="image/svg+xml" href="/icon.svg">                  <link rel=\"stylesheet\" href=\"/styles.css\">
                 </head>
                 <body class=\"page-picture\">
                   <header>
-                    <div class=\"left-nav\"><a href=\"%s\">← Back to album</a></div>
-                    <p class=\"crumbs\">%s</p>
-                    <div class=\"right-nav\">%s</div>
+                    <div class="left-nav"><a href="/"><img src="/icon.svg" alt="Home" class="header-icon"></a></div>
+                    <p class="crumbs">%s</p>
+                    <div class="right-nav">%s</div>
                   </header>
                   <main>
-                    <img src=\"%s\" alt=\"%s\">
+                    <img src="%s" alt="%s">
                   </main>
                   %s
                 </body>
                 </html>
                 """.formatted(
-                HtmlEscaper.escape(displayPath),
-                HtmlEscaper.escape(parent),
+                HtmlEscaper.escape(fileName),
                 breadcrumb,
                 userMenu,
                 HtmlEscaper.escape(imageSrc),
@@ -152,8 +147,7 @@ public final class HtmlRenderer {
                 <head>
                   <meta charset=\"utf-8\">
                   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-                  <title>%s</title>
-                  <link rel=\"stylesheet\" href=\"/styles.css\">
+                  <title>%s</title>                  <link rel="icon" type="image/svg+xml" href="/icon.svg">                  <link rel=\"stylesheet\" href=\"/styles.css\">
                 </head>
                 <body class=\"page-error\">
                   <h1>%s</h1>
@@ -170,8 +164,7 @@ public final class HtmlRenderer {
                 <head>
                   <meta charset=\"utf-8\">
                   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-                  <title>Error</title>
-                  <link rel=\"stylesheet\" href=\"/styles.css\">
+                  <title>Error</title>                  <link rel="icon" type="image/svg+xml" href="/icon.svg">                  <link rel=\"stylesheet\" href=\"/styles.css\">
                 </head>
                 <body class=\"page-error\">
                   <h1>Error %d</h1>
