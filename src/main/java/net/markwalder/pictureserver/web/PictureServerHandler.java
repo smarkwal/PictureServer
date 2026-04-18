@@ -267,8 +267,23 @@ public final class PictureServerHandler implements HttpHandler {
             return;
         }
 
+        // Collect sibling pictures in the same album directory, sorted alphabetically
+        List<String> siblingPictures = new ArrayList<>();
+        Path parentDir = imagePath.getParent();
+        if (parentDir != null) {
+            try (Stream<Path> list = Files.list(parentDir)) {
+                list.filter(p -> Files.isRegularFile(p) && isImageFile(p.getFileName().toString()))
+                        .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)))
+                        .forEach(p -> {
+                            String parentWebPath = parentWebPath(normalizeWebPath(imageRequestPath));
+                            String siblingWebPath = (parentWebPath == null || "/".equals(parentWebPath) ? "" : parentWebPath) + "/" + p.getFileName().toString();
+                            siblingPictures.add(normalizeWebPath(siblingWebPath));
+                        });
+            }
+        }
+
         String normalizedImagePath = normalizeWebPath(imageRequestPath);
-        sendHtml(exchange, 200, htmlRenderer.renderPicturePage(normalizedImagePath, normalizedImagePath));
+        sendHtml(exchange, 200, htmlRenderer.renderPicturePage(normalizedImagePath, normalizedImagePath, siblingPictures));
     }
 
     private void sendImage(HttpExchange exchange, Path imagePath) throws IOException {

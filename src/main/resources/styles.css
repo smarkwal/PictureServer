@@ -306,14 +306,66 @@ a:hover {
     background: #f2f2f2;
 }
 
+.picture-layout {
+    display: flex;
+    height: calc(100vh - 61px);
+}
+
+.picture-sidebar {
+    width: 80px;
+    min-width: 80px;
+    background: #f3eee7;
+    border-right: 1px solid #d9d2c8;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .03);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 4px;
+}
+
+.sidebar-thumb {
+    display: block;
+    opacity: 0.7;
+    transition: opacity .15s ease;
+}
+
+.sidebar-thumb:hover {
+    opacity: 1;
+}
+
+.sidebar-thumb-current {
+    opacity: 1;
+}
+
+.sidebar-thumb-image {
+    width: 100%;
+    max-width: none;
+    height: 54px;
+    max-height: none;
+    object-fit: cover;
+    display: block;
+    border-radius: 4px;
+    border: 0 solid transparent;
+    box-shadow: none;
+    background: transparent;
+}
+
+.sidebar-thumb-image-current {
+    border-width: 3px;
+    border-color: #2196f3;
+}
+
 .page-picture main {
+    flex: 1;
     padding: 16px;
     display: grid;
     place-items: center;
+    overflow: auto;
 }
 
 .page-picture img {
-    max-width: min(96vw, 1400px);
+    max-width: min(96%, 1400px);
     max-height: 85vh;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .25);

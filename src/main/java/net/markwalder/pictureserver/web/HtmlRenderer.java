@@ -93,7 +93,7 @@ public final class HtmlRenderer {
                 confirmationDialog);
     }
 
-    public String renderPicturePage(String displayPath, String imageSrc) {
+    public String renderPicturePage(String displayPath, String imageSrc, List<String> siblingPictures) {
         String fileName = displayPath.contains("/")
                 ? displayPath.substring(displayPath.lastIndexOf('/') + 1)
                 : displayPath;
@@ -111,6 +111,30 @@ public final class HtmlRenderer {
                 displayPath,
                 "Delete",
                 true).render();
+
+        StringBuilder sidebarHtml = new StringBuilder();
+        if (!siblingPictures.isEmpty()) {
+            sidebarHtml.append("<nav class=\"picture-sidebar\">");
+            for (String sibling : siblingPictures) {
+                String siblingName = sibling.contains("/") ? sibling.substring(sibling.lastIndexOf('/') + 1) : sibling;
+                boolean isCurrent = sibling.equals(displayPath);
+                sidebarHtml.append("<a href=\"")
+                        .append(HtmlEscaper.escape(sibling + ".html"))
+                        .append("\" class=\"sidebar-thumb")
+                        .append(isCurrent ? " sidebar-thumb-current" : "")
+                        .append("\" title=\"")
+                        .append(HtmlEscaper.escape(siblingName))
+                        .append("\"><img class=\"sidebar-thumb-image")
+                        .append(isCurrent ? " sidebar-thumb-image-current" : "")
+                        .append("\" src=\"")
+                        .append(HtmlEscaper.escape(sibling))
+                        .append("\" alt=\"")
+                        .append(HtmlEscaper.escape(siblingName))
+                        .append("\"></a>");
+            }
+            sidebarHtml.append("</nav>");
+        }
+
         return """
                 <!doctype html>
                 <html lang=\"en\">
@@ -125,16 +149,26 @@ public final class HtmlRenderer {
                     <p class="crumbs">%s</p>
                     <div class="right-nav">%s</div>
                   </header>
-                  <main>
-                    <img src="%s" alt="%s">
-                  </main>
+                  <div class="picture-layout">
+                    %s
+                    <main>
+                      <img src="%s" alt="%s">
+                    </main>
+                  </div>
                   %s
+                  <script>
+                    const currentThumbnail = document.querySelector('.sidebar-thumb-image-current');
+                    if (currentThumbnail) {
+                      currentThumbnail.scrollIntoView({ block: 'center', inline: 'nearest' });
+                    }
+                  </script>
                 </body>
                 </html>
                 """.formatted(
                 HtmlEscaper.escape(fileName),
                 breadcrumb,
                 userMenu,
+                sidebarHtml.toString(),
                 HtmlEscaper.escape(imageSrc),
                 HtmlEscaper.escape(displayPath),
                 confirmationDialog);
