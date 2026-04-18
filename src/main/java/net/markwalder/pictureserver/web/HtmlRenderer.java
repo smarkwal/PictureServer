@@ -63,6 +63,18 @@ public final class HtmlRenderer {
           ? "<span class=\"nav-spacer\"></span>"
           : "<a class=\"back\" href=\"" + escapeHtml(parentPath) + "\">← Back to parent album</a>";
         String breadcrumb = breadcrumb(currentPath);
+        boolean isHomePage = currentPath == null || currentPath.isBlank() || "/".equals(currentPath);
+
+        StringBuilder menuItems = new StringBuilder();
+        if (isHomePage) {
+            menuItems.append(menuDialogItem("Shutdown", "shutdown-dialog", true));
+        }
+        menuItems.append(menuLinkItem("Logout", "/logout"));
+
+        String userMenu = userMenuHtml(menuItems.toString());
+        String confirmationDialog = isHomePage
+          ? confirmationDialogHtml("shutdown-dialog", "Stop the server?", "/shutdown-server", null, null, "Shutdown", true)
+          : "";
 
         return """
                 <!doctype html>
@@ -77,20 +89,36 @@ public final class HtmlRenderer {
                   <header>
                     <div class=\"left-nav\">%s</div>
                     <p class=\"crumbs\">%s</p>
-                    <div class=\"right-nav\"><a href=\"/logout\">Logout</a></div>
+                    <div class=\"right-nav\">%s</div>
                   </header>
+                  %s
                   %s
                 </body>
                 </html>
                 """.formatted(
                 parent,
                 breadcrumb,
-                grid.length() == 0 ? "<p class=\"empty\">No albums or pictures here.</p>" : "<section class=\"grid\">" + grid + "</section>");
+                userMenu,
+                grid.length() == 0 ? "<p class=\"empty\">No albums or pictures here.</p>" : "<section class=\"grid\">" + grid + "</section>",
+                confirmationDialog);
     }
 
     public String renderPicturePage(String displayPath, String parentPath, String imageSrc) {
         String parent = parentPath == null ? "/" : parentPath;
         String breadcrumb = breadcrumb(displayPath);
+        StringBuilder menuItems = new StringBuilder();
+        menuItems.append(menuDialogItem("Delete", "delete-dialog", true));
+        menuItems.append(menuLinkItem("Logout", "/logout"));
+
+        String userMenu = userMenuHtml(menuItems.toString());
+        String confirmationDialog = confirmationDialogHtml(
+                "delete-dialog",
+                "Delete this image?",
+                "/delete-image",
+                "p",
+                displayPath,
+                "Delete",
+                true);
         return """
                 <!doctype html>
                 <html lang=\"en\">
@@ -104,14 +132,40 @@ public final class HtmlRenderer {
                   <header>
                     <div class=\"left-nav\"><a href=\"%s\">← Back to album</a></div>
                     <p class=\"crumbs\">%s</p>
-                    <div class=\"right-nav\"><a href=\"/logout\">Logout</a></div>
+                    <div class=\"right-nav\">%s</div>
                   </header>
                   <main>
                     <img src=\"%s\" alt=\"%s\">
                   </main>
+                  %s
                 </body>
                 </html>
-                """.formatted(escapeHtml(displayPath), escapeHtml(parent), breadcrumb, escapeHtml(imageSrc), escapeHtml(displayPath));
+                """.formatted(
+                escapeHtml(displayPath),
+                escapeHtml(parent),
+                breadcrumb,
+                userMenu,
+                escapeHtml(imageSrc),
+                escapeHtml(displayPath),
+                confirmationDialog);
+    }
+
+    public String renderInfoPage(String title, String message) {
+        return """
+                <!doctype html>
+                <html lang=\"en\">
+                <head>
+                  <meta charset=\"utf-8\">
+                  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
+                  <title>%s</title>
+                  <link rel=\"stylesheet\" href=\"/styles.css\">
+                </head>
+                <body class=\"page-error\">
+                  <h1>%s</h1>
+                  <p>%s</p>
+                </body>
+                </html>
+                """.formatted(escapeHtml(title), escapeHtml(title), escapeHtml(message));
     }
 
     public String renderErrorPage(int status, String message) {
@@ -186,5 +240,60 @@ public final class HtmlRenderer {
       }
 
       return out.toString();
+    }
+
+    private static String userMenuHtml(String menuItemsHtml) {
+        return """
+                <details class=\"user-menu\">
+                  <summary class=\"menu-button\" aria-label=\"Open user menu\">☰</summary>
+                  <nav class=\"menu-panel\">
+                    %s
+                  </nav>
+                </details>
+                """.formatted(menuItemsHtml);
+    }
+
+    private static String menuLinkItem(String label, String href) {
+        return """
+                <a class=\"menu-item\" href=\"%s\" onclick=\"this.closest('details').removeAttribute('open')\">%s</a>
+                """.formatted(escapeHtml(href), escapeHtml(label));
+    }
+
+    private static String menuDialogItem(String label, String dialogId, boolean danger) {
+        return """
+                <button type=\"button\" class=\"menu-item %s\" onclick=\"this.closest('details').removeAttribute('open'); document.getElementById('%s').showModal()\">%s</button>
+                """.formatted(danger ? "danger" : "", escapeHtml(dialogId), escapeHtml(label));
+    }
+
+    private static String confirmationDialogHtml(
+            String dialogId,
+            String message,
+            String action,
+            String hiddenName,
+            String hiddenValue,
+            String confirmLabel,
+            boolean danger) {
+        String hiddenInput = (hiddenName == null || hiddenName.isBlank())
+                ? ""
+                : "<input type=\"hidden\" name=\"" + escapeHtml(hiddenName) + "\" value=\"" + escapeHtml(hiddenValue == null ? "" : hiddenValue) + "\">";
+
+        return """
+                <dialog id=\"%s\" class=\"confirm-dialog\">
+                  <form method=\"post\" action=\"%s\" class=\"confirm-form\">
+                    <p>%s</p>
+                    %s
+                    <div class=\"confirm-actions\">
+                      <button type=\"submit\" class=\"%s\">%s</button>
+                      <button type=\"submit\" formmethod=\"dialog\">Cancel</button>
+                    </div>
+                  </form>
+                </dialog>
+                """.formatted(
+                escapeHtml(dialogId),
+                escapeHtml(action),
+                escapeHtml(message),
+                hiddenInput,
+                danger ? "danger" : "",
+                escapeHtml(confirmLabel));
     }
 }

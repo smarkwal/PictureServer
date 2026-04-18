@@ -25,7 +25,14 @@ public final class Main {
         Settings settings = SettingsLoader.load(settingsFile, cwd);
 
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", settings.port()), 0);
-        PictureServerHandler handler = new PictureServerHandler(settings, new SessionManager(), new HtmlRenderer());
+        PictureServerHandler handler = new PictureServerHandler(
+            settings,
+            new SessionManager(),
+            new HtmlRenderer(),
+                () -> {
+                    server.stop(0);
+                    System.exit(0);
+                });
 
         server.createContext("/", handler);
         server.setExecutor(Executors.newFixedThreadPool(16));

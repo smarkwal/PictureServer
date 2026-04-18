@@ -1,5 +1,6 @@
 package net.markwalder.pictureserver.web;
 
+import java.awt.Desktop;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,11 +30,13 @@ public final class PictureServerHandler implements HttpHandler {
     private final Settings settings;
     private final SessionManager sessionManager;
     private final HtmlRenderer htmlRenderer;
+    private final Runnable shutdownAction;
 
-    public PictureServerHandler(Settings settings, SessionManager sessionManager, HtmlRenderer htmlRenderer) {
+    public PictureServerHandler(Settings settings, SessionManager sessionManager, HtmlRenderer htmlRenderer, Runnable shutdownAction) {
         this.settings = settings;
         this.sessionManager = sessionManager;
         this.htmlRenderer = htmlRenderer;
+        this.shutdownAction = shutdownAction;
     }
 
     @Override
@@ -59,6 +62,16 @@ public final class PictureServerHandler implements HttpHandler {
 
             if (!isAuthenticated(exchange)) {
                 redirect(exchange, "/login?next=" + encodePath(path));
+                return;
+            }
+
+            if ("/delete-image".equals(path)) {
+                handleDeleteImage(exchange, method);
+                return;
+            }
+
+            if ("/shutdown-server".equals(path)) {
+                handleShutdownServer(exchange, method);
                 return;
             }
 
@@ -176,6 +189,45 @@ public final class PictureServerHandler implements HttpHandler {
         String parentPath = parentWebPath(normalizedRequestPath);
         String html = htmlRenderer.renderAlbumPage(normalizedRequestPath, parentPath, albums, pictures);
         sendHtml(exchange, 200, html);
+    }
+
+    private void handleDeleteImage(HttpExchange exchange, String method) throws IOException {
+        if (!"POST".equals(method)) {
+            sendHtml(exchange, 405, htmlRenderer.renderErrorPage(405, "Method not allowed."));
+            return;
+        }
+
+        Map<String, String> form = readForm(exchange);
+        String requested = form.get("p");
+        if (requested == null || requested.isBlank()) {
+            throw new IllegalArgumentException("Missing image path.");
+        }
+
+        Path imagePath = resolveSafePath(requested);
+        if (!Files.isRegularFile(imagePath) || !isImageFile(imagePath.getFileName().toString())) {
+            sendHtml(exchange, 404, htmlRenderer.renderErrorPage(404, "Picture not found."));
+            return;
+        }
+
+        boolean moved = moveToTrash(imagePath);
+        if (!moved) {
+            sendHtml(exchange, 500, htmlRenderer.renderErrorPage(500, "Moving to trash is not supported on this system."));
+            return;
+        }
+
+        String normalizedImagePath = normalizeWebPath(requested);
+        String parentPath = parentWebPath(normalizedImagePath);
+        redirect(exchange, parentPath == null ? "/" : parentPath);
+    }
+
+    private void handleShutdownServer(HttpExchange exchange, String method) throws IOException {
+        if (!"POST".equals(method)) {
+            sendHtml(exchange, 405, htmlRenderer.renderErrorPage(405, "Method not allowed."));
+            return;
+        }
+
+        sendHtml(exchange, 200, htmlRenderer.renderInfoPage("Shutting down", "The server is shutting down."));
+        new Thread(shutdownAction, "shutdown-server-thread").start();
     }
 
     private void handlePicturePage(HttpExchange exchange, String htmlPath) throws IOException {
@@ -357,5 +409,18 @@ public final class PictureServerHandler implements HttpHandler {
             return "image/bmp";
         }
         return "image/jpeg";
+    }
+
+    private boolean moveToTrash(Path imagePath) {
+        if (!Desktop.isDesktopSupported()) {
+            return false;
+        }
+
+        Desktop desktop = Desktop.getDesktop();
+        if (!desktop.isSupported(Desktop.Action.MOVE_TO_TRASH)) {
+            return false;
+        }
+
+        return desktop.moveToTrash(imagePath.toFile());
     }
 }

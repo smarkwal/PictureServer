@@ -109,6 +109,108 @@ a:hover {
     text-align: right;
 }
 
+.page-album .user-menu,
+.page-picture .user-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.page-album .menu-button,
+.page-picture .menu-button {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    user-select: none;
+}
+
+.page-album .menu-button::-webkit-details-marker,
+.page-picture .menu-button::-webkit-details-marker {
+    display: none;
+}
+
+.page-album .user-menu[open] .menu-button,
+.page-picture .user-menu[open] .menu-button {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.page-album .menu-panel,
+.page-picture .menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 140px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .12);
+    padding: 6px;
+    text-align: left;
+    z-index: 10;
+}
+
+.page-album .menu-item,
+.page-picture .menu-item {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: #1f2937;
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.page-album .menu-item:hover,
+.page-picture .menu-item:hover {
+    background: #f3f4f6;
+}
+
+.page-album .menu-item.danger,
+.page-picture .menu-item.danger,
+.confirm-form .danger {
+    color: #b91c1c;
+}
+
+.confirm-dialog {
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 320px;
+}
+
+.confirm-dialog::backdrop {
+    background: rgba(0, 0, 0, .35);
+}
+
+.confirm-form {
+    margin: 0;
+}
+
+.confirm-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.confirm-actions button {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
 .page-album .nav-spacer {
     display: inline-block;
     width: 1px;
