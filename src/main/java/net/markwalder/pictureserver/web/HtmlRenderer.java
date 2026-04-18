@@ -152,7 +152,9 @@ public final class HtmlRenderer {
                   <div class="picture-layout">
                     %s
                     <main>
-                      <img src="%s" alt="%s">
+                      <div class="picture-stage">
+                        <img src="%s" alt="%s">
+                      </div>
                     </main>
                   </div>
                   %s
