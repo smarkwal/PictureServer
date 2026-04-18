@@ -52,6 +52,11 @@ public final class PictureServerHandler implements HttpHandler {
                 return;
             }
 
+            if ("/styles.css".equals(path)) {
+                handleStyles(exchange, method);
+                return;
+            }
+
             if (!isAuthenticated(exchange)) {
                 redirect(exchange, "/login?next=" + encodePath(path));
                 return;
@@ -105,6 +110,27 @@ public final class PictureServerHandler implements HttpHandler {
         sessionId.ifPresent(sessionManager::removeSession);
         exchange.getResponseHeaders().add("Set-Cookie", sessionManager.cookieName() + "=; Path=/; HttpOnly; Max-Age=0");
         redirect(exchange, "/login");
+    }
+
+    private void handleStyles(HttpExchange exchange, String method) throws IOException {
+        if (!"GET".equals(method)) {
+            sendHtml(exchange, 405, htmlRenderer.renderErrorPage(405, "Method not allowed."));
+            return;
+        }
+
+        try (InputStream input = PictureServerHandler.class.getResourceAsStream("/styles.css")) {
+            if (input == null) {
+                sendHtml(exchange, 500, htmlRenderer.renderErrorPage(500, "Missing stylesheet resource."));
+                return;
+            }
+
+            byte[] bytes = input.readAllBytes();
+            exchange.getResponseHeaders().set("Content-Type", "text/css; charset=utf-8");
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream output = exchange.getResponseBody()) {
+                output.write(bytes);
+            }
+        }
     }
 
     private void handleGalleryPath(HttpExchange exchange) throws IOException {
