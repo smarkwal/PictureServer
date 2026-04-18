@@ -23,6 +23,7 @@ class SettingsLoaderTest {
         Files.writeString(settingsFile, """
                 path: ./pics
                 port: 9090
+                username: alice
                 password: secret
                 """);
 
@@ -30,6 +31,7 @@ class SettingsLoaderTest {
 
         assertEquals(pictures.toAbsolutePath().normalize(), settings.rootDirectory());
         assertEquals(9090, settings.port());
+        assertEquals("alice", settings.username());
         assertEquals("secret", settings.password());
     }
 
@@ -42,6 +44,7 @@ class SettingsLoaderTest {
         Files.writeString(settingsFile, """
                 path: ./pics
                 port: 99999
+                username: alice
                 password: secret
                 """);
 
@@ -53,6 +56,25 @@ class SettingsLoaderTest {
     }
 
     @Test
+    void rejectsMissingUsername() throws IOException {
+        Path pictures = tempDir.resolve("pics");
+        Files.createDirectories(pictures);
+
+        Path settingsFile = tempDir.resolve("settings.yaml");
+        Files.writeString(settingsFile, """
+                path: ./pics
+                port: 8080
+                password: secret
+                """);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> SettingsLoader.load(settingsFile, tempDir));
+
+        assertEquals("Missing or invalid 'username' in settings.yaml", exception.getMessage());
+    }
+
+    @Test
     void rejectsMissingPassword() throws IOException {
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
@@ -61,6 +83,7 @@ class SettingsLoaderTest {
         Files.writeString(settingsFile, """
                 path: ./pics
                 port: 8080
+                username: alice
                 """);
 
         IllegalStateException exception = assertThrows(

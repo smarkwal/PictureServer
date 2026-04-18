@@ -28,12 +28,14 @@ public final class HtmlRenderer {
                 </head>
                 <body class=\"page-login\">
                   <main class=\"card\">                    <img src="/icon.svg" alt="Picture Server" class="app-icon">                    <h1>Picture Server</h1>
-                    <p>Please enter your password.</p>
+                    <p>Please enter your username and password.</p>
                     %s
                     <form method=\"post\" action=\"/login\">
                       <input type=\"hidden\" name=\"next\" value=\"%s\">
+                      <label for=\"username\">Username</label>
+                      <input id=\"username\" name=\"username\" type=\"text\" required autofocus>
                       <label for=\"password\">Password</label>
-                      <input id=\"password\" name=\"password\" type=\"password\" required autofocus>
+                      <input id=\"password\" name=\"password\" type=\"password\" required>
                       <button type=\"submit\">Sign in</button>
                     </form>
                   </main>

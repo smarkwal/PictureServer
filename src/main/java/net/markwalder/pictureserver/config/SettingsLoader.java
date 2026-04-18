@@ -31,6 +31,7 @@ public final class SettingsLoader {
         }
 
         String pathValue = asNonBlankString(map.get("path"), "path");
+        String username = asNonBlankString(map.get("username"), "username");
         String password = asNonBlankString(map.get("password"), "password");
         int port = asPort(map.get("port"));
 
@@ -44,7 +45,7 @@ public final class SettingsLoader {
             throw new IllegalStateException("Configured path is not an existing directory: " + root);
         }
 
-        return new Settings(root, port, password);
+        return new Settings(root, port, username, password);
     }
 
     private static String asNonBlankString(Object value, String key) {

@@ -108,11 +108,12 @@ public final class PictureServerHandler implements HttpHandler {
         }
 
         Map<String, String> form = readForm(exchange);
+        String username = form.getOrDefault("username", "");
         String password = form.getOrDefault("password", "");
         String next = form.getOrDefault("next", "/");
 
-        if (!settings.password().equals(password)) {
-            sendHtml(exchange, 401, htmlRenderer.renderLoginPage(next, "Password does not match settings."));
+        if (!settings.username().equals(username) || !settings.password().equals(password)) {
+            sendHtml(exchange, 401, htmlRenderer.renderLoginPage(next, "Username or password does not match settings."));
             return;
         }
 

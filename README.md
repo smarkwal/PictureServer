@@ -9,6 +9,7 @@ Create `settings.yaml` in the current working directory:
 ```yaml
 path: ./pictures
 port: 8080
+username: admin
 password: secret
 ```
 
