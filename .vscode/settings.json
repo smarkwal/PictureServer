@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "git init": true,
+        "command": true,
+        "gradle wrapper": true
+    },
+    "java.configuration.updateBuildConfiguration": "automatic"
+}
