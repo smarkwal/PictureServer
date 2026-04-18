@@ -17,3 +17,9 @@ password: secret
 ```bash
 ./gradlew run
 ```
+
+## Test
+
+```bash
+./gradlew clean test
+```

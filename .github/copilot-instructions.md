@@ -25,6 +25,15 @@ src/main/java/net/markwalder/pictureserver/
   web/
     PictureServerHandler.java     # Routes, auth guard, path safety, album/image logic
     HtmlRenderer.java             # Inline HTML rendering (no template engine)
+    ui/
+      UiComponent.java            # Simple UI component contract
+      HtmlEscaper.java            # HTML escaping utility
+      BreadcrumbComponent.java    # Breadcrumb rendering
+      AlbumGridComponent.java     # Album/picture grid rendering
+      UserMenuComponent.java      # User menu container rendering
+      MenuLinkItemComponent.java  # Menu link item rendering
+      MenuDialogItemComponent.java # Menu action button rendering
+      ConfirmationDialogComponent.java # Reusable confirmation dialog rendering
 src/test/java/net/markwalder/pictureserver/
   config/SettingsLoaderTest.java  # Unit tests for settings parsing/validation
 ```
@@ -38,20 +47,10 @@ src/test/java/net/markwalder/pictureserver/
 - **No external frameworks**: Do not introduce Spring, Jakarta EE, Quarkus, or any IoC container.
 - **No database**: This project is intentionally stateless (no JPA, JDBC, H2, etc.).
 
-## Build & Run
+## Setup Reference
 
-```bash
-./gradlew clean test     # compile + run tests
-./gradlew run            # start server (requires settings.yaml in CWD)
-```
-
-## Configuration (`settings.yaml`)
-
-```yaml
-path: ./pictures   # absolute or relative directory containing images
-port: 8080
-password: secret
-```
+- For user-facing setup, configuration examples, and run/test commands, use `README.md` as the canonical source.
+- Keep this file focused on agent behavior, architecture constraints, and codebase conventions.
 
 ## Testing Guidelines
 

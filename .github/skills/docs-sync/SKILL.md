@@ -1,6 +1,6 @@
 ---
 name: docs-sync
-description: 'Review documentation files for consistency with the codebase. Use for: checking README.md, copilot-instructions.md, and other markdown docs for outdated class names, package names, method names, config keys, build commands, source layout, tech stack versions, and missing or incorrect information. Reports all inconsistencies and asks for confirmation before fixing.'
+description: 'Review documentation files for consistency with the codebase. Use for: checking README.md, copilot-instructions.md, and other markdown docs for outdated class names, package names, method names, config keys, build commands, source layout, tech stack versions, and missing or incorrect information; also detect duplicated information across docs and suggest deduplication with a canonical source. Reports all inconsistencies and asks for confirmation before fixing.'
 argument-hint: 'Optional: scope to a specific doc file (e.g. "README.md only") or a specific topic (e.g. "source layout")'
 ---
 
@@ -70,6 +70,21 @@ For each document, check:
 - [ ] **Cookie name** `PSSESSION` still matches `SessionManager.java`
 - [ ] **`resolveSafePath()`** still exists in `PictureServerHandler.java`
 
+### 2.5 Detect duplicated information across docs
+
+Check for duplicated content blocks between docs, especially between `README.md` and `.github/copilot-instructions.md`:
+
+- Setup/configuration examples (`settings.yaml` blocks)
+- Build/run/test command snippets
+- Project overview paragraphs copied verbatim
+
+When duplicates are found:
+
+1. Choose a canonical source (default: `README.md` for user-facing setup and commands).
+2. Keep full details only in the canonical file.
+3. Replace duplicated blocks in other files with a short reference to the canonical file.
+4. Preserve agent-only constraints in `.github/copilot-instructions.md`.
+
 ### 3. Report findings
 
 Present a table of all inconsistencies *before* making any changes:
@@ -80,6 +95,12 @@ Present a table of all inconsistencies *before* making any changes:
 | `README.md` | Run | Command `./gradlew run` is correct | ✅ No change needed |
 
 Ask for confirmation on each group of changes (e.g. "Fix source layout section?" or "Update all at once?").
+
+For duplication findings, include an explicit dedup proposal:
+
+| Files | Duplicated section | Canonical source | Suggested dedup |
+|------|---------------------|------------------|-----------------|
+| `README.md` + `.github/copilot-instructions.md` | `settings.yaml` example | `README.md` | Keep full YAML in README, replace in copilot instructions with "See README" |
 
 ### 4. Apply confirmed fixes
 
