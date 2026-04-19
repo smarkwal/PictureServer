@@ -18,6 +18,7 @@ class SettingsLoaderTest {
 
     @Test
     void loadsRelativePathFromWorkingDirectory() throws IOException {
+        // Arrange
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
 
@@ -29,8 +30,10 @@ class SettingsLoaderTest {
                 password=secret
                 """);
 
+        // Act
         Settings settings = SettingsLoader.load(settingsFile, tempDir);
 
+        // Assert
         assertEquals(pictures.toAbsolutePath().normalize(), settings.rootDirectory());
         assertEquals(9090, settings.port());
         assertEquals("alice", settings.username());
@@ -39,6 +42,7 @@ class SettingsLoaderTest {
 
     @Test
     void panicSettingsDefaultsAreApplied() throws IOException {
+        // Arrange
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
 
@@ -50,8 +54,10 @@ class SettingsLoaderTest {
                 password=secret
                 """);
 
+        // Act
         Settings settings = SettingsLoader.load(settingsFile, tempDir);
 
+        // Assert
         assertTrue(settings.panic().enabled());
         assertTrue(settings.panic().pathTraversalEnabled());
         assertTrue(settings.panic().knownAttackProbeEnabled());
@@ -67,6 +73,7 @@ class SettingsLoaderTest {
 
     @Test
     void panicSettingsCanBeOverriddenInSettingsProperties() throws IOException {
+        // Arrange
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
 
@@ -81,8 +88,10 @@ class SettingsLoaderTest {
                 panic.failedLogins.windowSeconds=30
                 """);
 
+        // Act
         Settings settings = SettingsLoader.load(settingsFile, tempDir);
 
+        // Assert
         assertFalse(settings.panic().enabled());
         assertEquals(3, settings.panic().failedLoginsThreshold());
         assertEquals(30, settings.panic().failedLoginsWindowSeconds());
@@ -92,6 +101,7 @@ class SettingsLoaderTest {
 
     @Test
     void rejectsPortOutsideRange() throws IOException {
+        // Arrange
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
 
@@ -103,15 +113,18 @@ class SettingsLoaderTest {
                 password=secret
                 """);
 
+        // Act
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
                 () -> SettingsLoader.load(settingsFile, tempDir));
 
+        // Assert
         assertEquals("Port must be between 1 and 65535", exception.getMessage());
     }
 
     @Test
     void rejectsMissingUsername() throws IOException {
+        // Arrange
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
 
@@ -122,15 +135,18 @@ class SettingsLoaderTest {
                 password=secret
                 """);
 
+        // Act
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
             () -> SettingsLoader.load(settingsFile, tempDir));
 
+        // Assert
         assertEquals("Missing or invalid 'username' in settings.properties", exception.getMessage());
     }
 
     @Test
     void rejectsMissingPassword() throws IOException {
+        // Arrange
         Path pictures = tempDir.resolve("pics");
         Files.createDirectories(pictures);
 
@@ -141,10 +157,12 @@ class SettingsLoaderTest {
                 username=alice
                 """);
 
+        // Act
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
             () -> SettingsLoader.load(settingsFile, tempDir));
 
+        // Assert
         assertEquals("Missing or invalid 'password' in settings.properties", exception.getMessage());
     }
 }

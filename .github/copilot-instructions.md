@@ -87,6 +87,7 @@ src/test/java/net/markwalder/pictureserver/
 - Use `@TempDir` for filesystem fixtures — never hardcode real paths.
 - Assert on `IllegalStateException` messages for settings validation tests.
 - Add tests under `src/test/java/net/markwalder/pictureserver/` mirroring the main package structure.
+- Follow the **AAA pattern** in every test method: separate the body into three sections with inline comments `// Arrange`, `// Act`, and `// Assert`. Omit `// Arrange` only when there is genuinely nothing to set up. Use `// Act & Assert` when the act and assert cannot be meaningfully separated (e.g., a single `assertEquals` with no intermediate variable).
 
 ## Commit Message Conventions
 
