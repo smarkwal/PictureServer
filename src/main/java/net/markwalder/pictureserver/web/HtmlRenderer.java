@@ -1,6 +1,7 @@
 package net.markwalder.pictureserver.web;
 
 import java.util.List;
+import java.util.Map;
 
 import net.markwalder.pictureserver.web.ui.AlbumGridComponent;
 import net.markwalder.pictureserver.web.ui.BreadcrumbComponent;
@@ -45,8 +46,8 @@ public final class HtmlRenderer {
                 """.formatted(errorHtml, HtmlEscaper.escape(next == null ? "/" : next));
     }
 
-    public String renderAlbumPage(String albumName, String currentPath, List<String> albums, List<String> pictures) {
-        String grid = new AlbumGridComponent(currentPath, albums, pictures).render();
+    public String renderAlbumPage(String albumName, String currentPath, List<String> albums, List<String> pictures, Map<String, String> albumPreviews) {
+        String grid = new AlbumGridComponent(currentPath, albums, pictures, albumPreviews).render();
 
         String breadcrumb = new BreadcrumbComponent(currentPath).render();
         boolean isHomePage = currentPath == null || currentPath.isBlank() || "/".equals(currentPath);

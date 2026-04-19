@@ -211,8 +211,25 @@ public final class PictureServerHandler implements HttpHandler {
         }
 
         String normalizedRequestPath = normalizeWebPath(requestPath);
+
+        Map<String, String> albumPreviews = new HashMap<>();
+        for (String album : albums) {
+            Path albumDir = fsPath.resolve(album);
+            try (Stream<Path> albumList = Files.list(albumDir)) {
+                Optional<Path> firstImage = albumList
+                        .filter(p -> Files.isRegularFile(p) && isImageFile(p.getFileName().toString()))
+                        .min(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)));
+                firstImage.ifPresent(p -> {
+                    String base = "/".equals(normalizedRequestPath) ? "" : normalizedRequestPath;
+                    albumPreviews.put(album, base + "/" + album + "/" + p.getFileName().toString());
+                });
+            } catch (IOException ignored) {
+                // album directory not accessible; no preview
+            }
+        }
+
         String albumName = fsPath.getFileName() == null ? "Album" : fsPath.getFileName().toString();
-        String html = htmlRenderer.renderAlbumPage(albumName, normalizedRequestPath, albums, pictures);
+        String html = htmlRenderer.renderAlbumPage(albumName, normalizedRequestPath, albums, pictures, albumPreviews);
         sendHtml(exchange, 200, html);
     }
 

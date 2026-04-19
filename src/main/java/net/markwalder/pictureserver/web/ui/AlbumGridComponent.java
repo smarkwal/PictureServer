@@ -1,17 +1,20 @@
 package net.markwalder.pictureserver.web.ui;
 
 import java.util.List;
+import java.util.Map;
 
 public final class AlbumGridComponent implements UiComponent {
 
     private final String currentPath;
     private final List<String> albums;
     private final List<String> pictures;
+    private final Map<String, String> albumPreviews;
 
-    public AlbumGridComponent(String currentPath, List<String> albums, List<String> pictures) {
+    public AlbumGridComponent(String currentPath, List<String> albums, List<String> pictures, Map<String, String> albumPreviews) {
         this.currentPath = currentPath;
         this.albums = albums;
         this.pictures = pictures;
+        this.albumPreviews = albumPreviews;
     }
 
     @Override
@@ -19,9 +22,18 @@ public final class AlbumGridComponent implements UiComponent {
         StringBuilder grid = new StringBuilder();
         for (String album : albums) {
             String href = joinPaths(currentPath, album);
+            String previewPath = albumPreviews.get(album);
             grid.append("<a class=\"tile album\" href=\"")
                     .append(HtmlEscaper.escape(UrlEncoder.encodePath(href)))
-                    .append("\"><span class=\"icon\">📁</span><span>")
+                    .append("\">");
+            if (previewPath != null) {
+                grid.append("<div class=\"album-thumb-box\"><img class=\"album-thumb\" src=\"")
+                        .append(HtmlEscaper.escape(UrlEncoder.encodePath(previewPath)))
+                        .append("\" alt=\"\"></div>");
+            } else {
+                grid.append("<span class=\"icon\">📁</span>");
+            }
+            grid.append("<span>")
                     .append(HtmlEscaper.escape(album))
                     .append("</span></a>");
         }
