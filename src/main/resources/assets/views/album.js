@@ -34,7 +34,6 @@ export async function render(appEl, path, navigate) {
         const src = '/api/images' + (isRoot ? '' : path) + '/' + encodeURIComponent(name);
         return `<div class="tile picture" data-path="${escapeAttr(picturePath)}">
             <div class="picture-thumb-box"><img class="picture-thumb" src="${escapeAttr(src)}" alt="${escapeAttr(name)}" loading="lazy"></div>
-            <span>${escapeHtml(name)}</span>
           </div>`;
     }).join('');
 
