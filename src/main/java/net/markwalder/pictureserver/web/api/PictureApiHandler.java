@@ -15,6 +15,7 @@ import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
 import net.markwalder.pictureserver.web.ImageTypes;
 import net.markwalder.pictureserver.web.PathSafety;
+import net.markwalder.pictureserver.web.WebPaths;
 import net.markwalder.pictureserver.web.service.PictureService;
 
 final class PictureApiHandler {
@@ -31,8 +32,8 @@ final class PictureApiHandler {
     }
 
     void handleGet(HttpExchange exchange, String pathSuffix) throws IOException {
-        String pictureWebPath = PathSafety.normalizeWebPath(pathSuffix);
-        String encodedPictureWebPath = PathSafety.encodeWebPath(pictureWebPath);
+        String pictureWebPath = WebPaths.normalizeWebPath(pathSuffix);
+        String encodedPictureWebPath = WebPaths.encodeWebPath(pictureWebPath);
 
         Path pictureFsPath;
         try {
@@ -51,12 +52,12 @@ final class PictureApiHandler {
 
         PictureService.PictureInfo info = PictureService.getPictureInfo(pictureFsPath);
 
-        String parentWebPath = PathSafety.parentWebPath(pictureWebPath);
+        String parentWebPath = WebPaths.parentWebPath(pictureWebPath);
         String parentPrefix = (parentWebPath == null || "/".equals(parentWebPath)) ? "" : parentWebPath;
 
         List<String> siblings = new ArrayList<>();
         for (String name : info.siblingNames()) {
-            siblings.add(PathSafety.encodeWebPath(parentPrefix + "/" + name));
+            siblings.add(WebPaths.encodeWebPath(parentPrefix + "/" + name));
         }
 
         String src = "/api/images" + encodedPictureWebPath;

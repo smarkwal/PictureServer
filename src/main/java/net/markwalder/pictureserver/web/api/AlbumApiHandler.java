@@ -13,6 +13,7 @@ import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
 import net.markwalder.pictureserver.web.PathSafety;
+import net.markwalder.pictureserver.web.WebPaths;
 import net.markwalder.pictureserver.web.service.AlbumService;
 
 final class AlbumApiHandler {
@@ -38,7 +39,7 @@ final class AlbumApiHandler {
             return;
         }
 
-        String albumWebPath = PathSafety.normalizeWebPath(pathSuffix);
+        String albumWebPath = WebPaths.normalizeWebPath(pathSuffix);
 
         Path albumFsPath;
         try {
@@ -57,12 +58,12 @@ final class AlbumApiHandler {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(albumFsPath);
 
-        String encodedAlbumWebPath = PathSafety.encodeWebPath(albumWebPath);
+        String encodedAlbumWebPath = WebPaths.encodeWebPath(albumWebPath);
         String base = "/".equals(albumWebPath) ? "" : albumWebPath;
         Map<String, String> albumPreviews = new LinkedHashMap<>();
         info.albumFirstImages().forEach((album, firstImage) -> {
             String previewPath = base + "/" + album + "/" + firstImage;
-            albumPreviews.put(album, "/api/images" + PathSafety.encodeWebPath(previewPath));
+            albumPreviews.put(album, "/api/images" + WebPaths.encodeWebPath(previewPath));
         });
 
         JsonHelper.sendJson(exchange, 200, new AlbumResponse(encodedAlbumWebPath, info.albums(), albumPreviews, info.pictures()));
