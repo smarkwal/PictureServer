@@ -20,6 +20,8 @@ public final class Main {
     }
 
     public static void main(String[] args) throws IOException {
+        String version = Main.class.getPackage().getImplementationVersion();
+
         Path cwd = Path.of(System.getProperty("user.dir"));
         Path settingsFile = cwd.resolve("settings.properties");
 
@@ -41,6 +43,8 @@ public final class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
 
         server.start();
-        Logger.log("Picture server listening on http://0.0.0.0:%d with root %s", settings.port(), settings.rootDirectory());
+        Logger.log("Picture Server %s", version != null ? version : "(dev)");
+        Logger.log("Listening on http://0.0.0.0:%d", settings.port());
+        Logger.log("Pictures root: %s", settings.rootDirectory());
     }
 }

@@ -29,6 +29,12 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.jar {
+    manifest {
+        attributes["Implementation-Version"] = version
+    }
+}
+
 tasks.build {
     dependsOn("fatJar")
 }
@@ -39,6 +45,7 @@ tasks.register<Jar>("fatJar") {
     archiveClassifier = "all"
     manifest {
         attributes["Main-Class"] = application.mainClass
+        attributes["Implementation-Version"] = version
     }
     from(sourceSets.main.get().output)
     dependsOn(configurations.runtimeClasspath)
