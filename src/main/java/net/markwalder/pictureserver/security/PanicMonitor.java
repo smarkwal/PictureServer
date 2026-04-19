@@ -62,6 +62,8 @@ public final class PanicMonitor {
                     settings.invalidSessionThreshold(), settings.invalidSessionWindowSeconds());
             case EXCESSIVE_404 -> checkThreshold(event, sourceIp, userAgent,
                     settings.excessive404Threshold(), settings.excessive404WindowSeconds());
+            case INVALID_REQUEST -> checkThreshold(event, sourceIp, userAgent,
+                    settings.invalidRequestThreshold(), settings.invalidRequestWindowSeconds());
         }
     }
 

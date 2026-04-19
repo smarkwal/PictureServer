@@ -52,7 +52,9 @@ public final class SettingsLoader {
                 asPositiveInt(props.getProperty("panic.invalidSession.threshold"), "panic.invalidSession.threshold"),
                 asPositiveInt(props.getProperty("panic.invalidSession.windowSeconds"), "panic.invalidSession.windowSeconds"),
                 asPositiveInt(props.getProperty("panic.excessive404.threshold"), "panic.excessive404.threshold"),
-                asPositiveInt(props.getProperty("panic.excessive404.windowSeconds"), "panic.excessive404.windowSeconds")
+                asPositiveInt(props.getProperty("panic.excessive404.windowSeconds"), "panic.excessive404.windowSeconds"),
+                asPositiveInt(props.getProperty("panic.invalidRequest.threshold"), "panic.invalidRequest.threshold"),
+                asPositiveInt(props.getProperty("panic.invalidRequest.windowSeconds"), "panic.invalidRequest.windowSeconds")
         );
 
         return new Settings(root, port, username, password, panic);

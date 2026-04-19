@@ -13,6 +13,8 @@ public record Settings(Path rootDirectory, int port, String username, String pas
             int invalidSessionThreshold,
             int invalidSessionWindowSeconds,
             int excessive404Threshold,
-            int excessive404WindowSeconds
+            int excessive404WindowSeconds,
+            int invalidRequestThreshold,
+            int invalidRequestWindowSeconds
     ) {}
 }

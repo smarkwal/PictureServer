@@ -61,6 +61,8 @@ class SettingsLoaderTest {
         assertEquals(60, settings.panic().invalidSessionWindowSeconds());
         assertEquals(10, settings.panic().excessive404Threshold());
         assertEquals(60, settings.panic().excessive404WindowSeconds());
+        assertEquals(5, settings.panic().invalidRequestThreshold());
+        assertEquals(60, settings.panic().invalidRequestWindowSeconds());
     }
 
     @Test

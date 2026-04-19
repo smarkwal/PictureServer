@@ -201,8 +201,7 @@ a:hover {
 }
 
 .page-album .menu-item.danger,
-.page-picture .menu-item.danger,
-.confirm-form .danger {
+.page-picture .menu-item.danger {
     color: #b91c1c;
 }
 
@@ -215,10 +214,6 @@ a:hover {
 
 .confirm-dialog::backdrop {
     background: rgba(0, 0, 0, .35);
-}
-
-.confirm-form {
-    margin: 0;
 }
 
 .confirm-actions {
@@ -257,6 +252,7 @@ a:hover {
     text-align: center;
     box-shadow: 0 5px 14px rgba(0, 0, 0, .08);
     transition: transform .18s ease, box-shadow .18s ease;
+    cursor: pointer;
 }
 
 .page-album .tile:hover {
@@ -360,6 +356,7 @@ a:hover {
     display: block;
     opacity: 0.7;
     transition: opacity .15s ease;
+    cursor: pointer;
 }
 
 .sidebar-thumb:hover {
@@ -424,4 +421,13 @@ a:hover {
 
 .page-error h1 {
     margin-top: 0;
+}
+
+.page-shutdown {
+    background: linear-gradient(120deg, #f7efe3, #dce7ef);
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    text-align: center;
 }

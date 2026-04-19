@@ -11,8 +11,8 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.SettingsLoader;
 import net.markwalder.pictureserver.security.PanicMonitor;
-import net.markwalder.pictureserver.web.HtmlRenderer;
-import net.markwalder.pictureserver.web.PictureServerHandler;
+import net.markwalder.pictureserver.web.RequestRouter;
+import net.markwalder.pictureserver.web.api.ApiRouter;
 
 public final class Main {
 
@@ -32,14 +32,10 @@ public final class Main {
             System.exit(0);
         };
         PanicMonitor panicMonitor = new PanicMonitor(settings.panic(), sessionManager, shutdownAction);
-        PictureServerHandler handler = new PictureServerHandler(
-                settings,
-                sessionManager,
-                new HtmlRenderer(),
-                shutdownAction,
-                panicMonitor);
+        ApiRouter apiRouter = new ApiRouter(settings, sessionManager, panicMonitor, shutdownAction);
+        RequestRouter requestRouter = new RequestRouter(panicMonitor, apiRouter);
 
-        server.createContext("/", handler);
+        server.createContext("/", requestRouter);
         server.setExecutor(Executors.newFixedThreadPool(16));
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));

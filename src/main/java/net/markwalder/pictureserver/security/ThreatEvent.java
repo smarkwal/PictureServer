@@ -5,5 +5,6 @@ public enum ThreatEvent {
     KNOWN_ATTACK_PROBE,
     FAILED_LOGIN,
     INVALID_SESSION,
-    EXCESSIVE_404
+    EXCESSIVE_404,
+    INVALID_REQUEST
 }

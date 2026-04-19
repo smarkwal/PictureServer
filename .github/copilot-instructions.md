@@ -9,6 +9,8 @@ A Java application that hosts an embedded HTTP server for browsing pictures stor
 - **Language**: Java 25
 - **Build**: Gradle 9+ with Kotlin DSL (`build.gradle.kts`)
 - **HTTP server**: Plain JDK `com.sun.net.httpserver.HttpServer` — no web frameworks
+- **JSON**: Jackson Databind 2.19.0 — strict deserialization, `@JsonCreator`/`@JsonProperty` on all request POJOs
+- **Frontend**: Vanilla JS ES modules (no framework); static assets served from classpath `/assets/`
 - **Configuration**: Java `java.util.Properties` (no external libraries)
 - **Tests**: JUnit 6 (Jupiter) via `@Test`, `@TempDir`; no mocking libraries
 
@@ -16,40 +18,61 @@ A Java application that hosts an embedded HTTP server for browsing pictures stor
 
 ```text
 src/main/java/net/markwalder/pictureserver/
-  Logger.java                     # Logging utility
-  Main.java                       # Entry point, HttpServer bootstrap
+  Logger.java                          # Logging utility
+  Main.java                            # Entry point, HttpServer bootstrap
   auth/
-    SessionManager.java           # Server-side session map, cookie name PSSESSION
+    SessionManager.java                # Server-side session map, cookie name PSSESSION
   config/
-    Settings.java                 # Record: rootDirectory, port, username, password, panic
-    SettingsLoader.java           # Reads settings.properties from CWD
+    Settings.java                      # Record: rootDirectory, port, username, password, panic
+    SettingsLoader.java                # Reads settings.properties from CWD
   security/
-    PanicMonitor.java             # Threat detection and panic mode
-    ThreatEvent.java              # Threat event types enum
+    PanicMonitor.java                  # Threat detection and panic mode
+    ThreatEvent.java                   # Threat event types enum
   web/
-    HtmlRenderer.java             # Inline HTML rendering (no template engine)
-    PictureServerHandler.java     # Routes, auth guard, path safety, album/image logic
-    ui/
-      AlbumGridComponent.java     # Album/picture grid rendering
-      BreadcrumbComponent.java    # Breadcrumb rendering
-      ConfirmationDialogComponent.java # Reusable confirmation dialog rendering
-      HtmlEscaper.java            # HTML escaping utility
-      MenuDialogItemComponent.java # Menu action button rendering
-      MenuLinkItemComponent.java  # Menu link item rendering
-      UiComponent.java            # Simple UI component contract
-      UrlEncoder.java             # URL path encoding utility
-      UserMenuComponent.java      # User menu container rendering
+    ImageTypes.java                    # Image MIME type mapping and extension checks
+    PathSafety.java                    # resolveSafePath(), normalizeWebPath(), parentWebPath()
+    RequestRouter.java                 # Top-level HttpHandler; calls panicMonitor.checkPath(), routes by prefix
+    StaticAssetHandler.java            # Serves classpath /assets/ files (index.html, app.css, JS, icon.svg)
+    api/
+      ApiRouter.java                   # Routes /api/*; auth guard for protected endpoints
+      AlbumApiHandler.java             # GET /api/albums/{path} → JSON album listing
+      AuthApiHandler.java              # POST /api/login, POST /api/logout
+      ImageApiHandler.java             # GET /api/images/{path} → binary image stream
+      JsonHelper.java                  # Shared strict ObjectMapper, sendJson(), readJson(), readCookie()
+      PictureApiHandler.java           # GET /api/pictures/{path}, DELETE /api/pictures/{path}
+      SessionApiHandler.java           # GET /api/session → { authenticated: bool }
+      ShutdownApiHandler.java          # POST /api/shutdown
+    service/
+      AlbumService.java                # listAlbum(): albums, albumPreviews, pictures
+      PictureService.java              # getPictureInfo(): sibling list
+src/main/resources/assets/
+  index.html                           # SPA shell — served for / and all non-API, non-asset paths
+  app.css                              # Stylesheet
+  icon.svg                             # Favicon
+  app.js                               # Entry point; imports all views/components, calls router.init()
+  router.js                            # History API client router (navigate, popstate, session check)
+  api.js                               # fetch() wrappers returning JSON; throws ApiError on non-2xx
+  views/
+    login.js                           # Login form view
+    album.js                           # Album grid view (tiles, breadcrumb, menu)
+    picture.js                         # Picture detail view (sidebar, delete, prev/next)
+  components/
+    breadcrumb.js                      # Clickable breadcrumb from a path string
+    menu.js                            # Hamburger <details> menu
 src/test/java/net/markwalder/pictureserver/
-  config/SettingsLoaderTest.java  # Unit tests for settings parsing/validation
-  security/PanicMonitorTest.java  # Unit tests for panic monitor
-  web/ui/UrlEncoderTest.java      # Unit tests for URL encoding
+  config/SettingsLoaderTest.java       # Unit tests for settings parsing/validation
+  security/PanicMonitorTest.java       # Unit tests for panic monitor
+  web/service/AlbumServiceTest.java    # Unit tests for album listing logic
+  web/service/PictureServiceTest.java  # Unit tests for picture sibling logic
 ```
 
 ## Key Conventions
 
-- **Authentication**: Plain-text username/password comparison against `settings.properties`. Session persisted in `SessionManager` with a browser-session cookie (`PSSESSION`).
-- **Path safety**: All URL paths are resolved against the configured root via `resolveSafePath()` in `PictureServerHandler`. Never bypass or weaken this check.
-- **HTML**: Rendered inline in `HtmlRenderer` as Java text blocks — no external template engine.
+- **Authentication**: Plain-text username/password comparison against `settings.properties`. Session persisted in `SessionManager` with a browser-session cookie (`PSSESSION`; `HttpOnly; SameSite=Strict`).
+- **Path safety**: All URL paths are resolved against the configured root via `resolveSafePath()` in `PathSafety`. Never bypass or weaken this check.
+- **Frontend**: Single-Page Application using vanilla JS ES modules. The server serves `index.html` as a catch-all; the JS router handles view rendering via the History API.
+- **API**: All data endpoints are under `/api/*` and return JSON. Static assets are served from `/assets/*`.
+- **JSON deserialization**: All incoming JSON is parsed through `JsonHelper`'s strict `ObjectMapper` — unknown properties, null primitives, and scalar coercion all throw `JsonProcessingException`, which triggers an `INVALID_REQUEST` panic event.
 - **Classes**: `final` with private constructors for utility/service classes; records for data-only types (`Settings`).
 - **No external frameworks**: Do not introduce Spring, Jakarta EE, Quarkus, or any IoC container.
 - **No database**: This project is intentionally stateless (no JPA, JDBC, H2, etc.).
@@ -121,8 +144,9 @@ If the work in a session covers multiple tasks, suggest a commit message for eac
 
 When looking up API docs or code examples for the libraries used in this project, use these Context7 library IDs:
 
-| Library                                           | Context7 ID                          |
-| ------------------------------------------------- | ------------------------------------ |
-| Java SE 25 / JDK 25 (standard library, APIs)      | `/websites/oracle_en_java_javase_25` |
-| Gradle 9.4.1 (Kotlin DSL, tasks, dependencies)    | `/websites/gradle_9_4_1`             |
-| JUnit 6 / Jupiter (tests, assertions, extensions) | `/junit-team/junit-framework`        |
+| Library                                           | Context7 ID                                   |
+| ------------------------------------------------- | --------------------------------------------- |
+| Java SE 25 / JDK 25 (standard library, APIs)      | `/websites/oracle_en_java_javase_25`          |
+| Gradle 9.4.1 (Kotlin DSL, tasks, dependencies)    | `/websites/gradle_9_4_1`                      |
+| JUnit 6 / Jupiter (tests, assertions, extensions) | `/junit-team/junit-framework`                 |
+| Jackson Databind 2.19.0 (JSON serialization)      | `/fasterxml/jackson-databind`                 |
