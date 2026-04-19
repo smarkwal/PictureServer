@@ -126,14 +126,14 @@ class PanicMonitorTest {
 
     @Test
     void panicClearsAllSessions() throws InterruptedException {
-        String session = sessionManager.createSession();
-        assertTrue(sessionManager.isAuthenticated(session));
+        String session = sessionManager.createSession("alice", IP, UA);
+        assertTrue(sessionManager.isAuthenticated(session, IP, UA));
 
         PanicMonitor m = monitor(DEFAULTS);
         m.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, IP, UA);
         assertPanicTriggered();
 
-        assertFalse(sessionManager.isAuthenticated(session));
+        assertFalse(sessionManager.isAuthenticated(session, IP, UA));
     }
 
     @Test

@@ -39,7 +39,7 @@ public final class ApiRouter {
 
         try {
             if ("GET".equals(method) && "/api/session".equals(path)) {
-                sessionHandler.handle(exchange);
+                sessionHandler.handle(exchange, sourceIp, userAgent);
                 return;
             }
             if ("POST".equals(method) && "/api/login".equals(path)) {
@@ -95,7 +95,7 @@ public final class ApiRouter {
         if (cookie.isEmpty()) {
             return false;
         }
-        if (!sessionManager.isAuthenticated(cookie.get())) {
+        if (!sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent)) {
             panicMonitor.recordEvent(ThreatEvent.INVALID_SESSION, sourceIp, userAgent);
             return false;
         }

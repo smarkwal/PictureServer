@@ -9,19 +9,31 @@ public final class SessionManager {
 
     private static final String COOKIE_NAME = "PSSESSION";
 
-    private final SecureRandom secureRandom = new SecureRandom();
-    private final Map<String, Boolean> sessions = new ConcurrentHashMap<>();
+    private record SessionData(String username, String clientIp, String userAgent) {}
 
-    public String createSession() {
+    private final SecureRandom secureRandom = new SecureRandom();
+    private final Map<String, SessionData> sessions = new ConcurrentHashMap<>();
+
+    public String createSession(String username, String clientIp, String userAgent) {
+        // Remove any existing session for the same username
+        sessions.entrySet().removeIf(e -> username.equals(e.getValue().username()));
+
         byte[] bytes = new byte[24];
         secureRandom.nextBytes(bytes);
         String id = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        sessions.put(id, Boolean.TRUE);
+        sessions.put(id, new SessionData(username, clientIp, userAgent));
         return id;
     }
 
-    public boolean isAuthenticated(String sessionId) {
-        return sessionId != null && sessions.containsKey(sessionId);
+    public boolean isAuthenticated(String sessionId, String clientIp, String userAgent) {
+        if (sessionId == null) return false;
+        SessionData data = sessions.get(sessionId);
+        if (data == null) return false;
+        if (!data.clientIp().equals(clientIp) || !data.userAgent().equals(userAgent)) {
+            sessions.remove(sessionId);
+            return false;
+        }
+        return true;
     }
 
     public void removeSession(String sessionId) {

@@ -16,13 +16,13 @@ final class SessionApiHandler {
         this.sessionManager = sessionManager;
     }
 
-    void handle(HttpExchange exchange) throws IOException {
+    void handle(HttpExchange exchange, String sourceIp, String userAgent) throws IOException {
         if (!"GET".equals(exchange.getRequestMethod())) {
             JsonHelper.sendJson(exchange, 405, Map.of("error", "Method not allowed"));
             return;
         }
         Optional<String> cookie = JsonHelper.readCookie(exchange, sessionManager.cookieName());
-        boolean authenticated = cookie.isPresent() && sessionManager.isAuthenticated(cookie.get());
+        boolean authenticated = cookie.isPresent() && sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent);
         JsonHelper.sendJson(exchange, 200, Map.of("authenticated", authenticated));
     }
 }

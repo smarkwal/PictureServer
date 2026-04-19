@@ -43,7 +43,7 @@ final class ImageApiHandler {
         }
 
         Optional<String> cookie = JsonHelper.readCookie(exchange, sessionManager.cookieName());
-        if (cookie.isEmpty() || !sessionManager.isAuthenticated(cookie.get())) {
+        if (cookie.isEmpty() || !sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent)) {
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
