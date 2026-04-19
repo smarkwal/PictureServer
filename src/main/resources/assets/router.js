@@ -6,6 +6,7 @@ const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
 let appEl;
 let pendingPath = null;
+let viewController = new AbortController();
 
 export function init(el) {
     appEl = el;
@@ -44,12 +45,15 @@ export function navigate(path, pushState = true) {
 }
 
 function renderView(path) {
+    viewController.abort();
+    viewController = new AbortController();
+    const signal = viewController.signal;
     if (!path || path === '/') {
-        albumView.render(appEl, '/', navigate);
+        albumView.render(appEl, '/', navigate, showLogin, signal);
     } else if (isImagePath(path)) {
-        pictureView.render(appEl, path, navigate);
+        pictureView.render(appEl, path, navigate, showLogin, signal);
     } else {
-        albumView.render(appEl, path, navigate);
+        albumView.render(appEl, path, navigate, showLogin, signal);
     }
 }
 

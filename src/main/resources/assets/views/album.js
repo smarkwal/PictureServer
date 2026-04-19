@@ -2,16 +2,13 @@ import * as api from '../api.js';
 import { renderBreadcrumb } from '../components/breadcrumb.js';
 import { renderMenu } from '../components/menu.js';
 
-let controller = new AbortController();
-
-export async function render(appEl, path, navigate) {
-    controller.abort();
-    controller = new AbortController();
+export async function render(appEl, path, navigate, showLogin, signal) {
     appEl.innerHTML = '<div class="page-album"><p style="padding:20px">Loading…</p></div>';
     let data;
     try {
         data = await api.getAlbum(path === '/' ? '' : path);
     } catch (err) {
+        if (err.status === 401) { showLogin(); return; }
         appEl.innerHTML = `<div class="page-error"><h1>Error</h1><p>${escapeHtml(err.message)}</p></div>`;
         return;
     }
@@ -93,7 +90,7 @@ export async function render(appEl, path, navigate) {
             await api.shutdown().catch(() => {});
             appEl.innerHTML = '<div class="page-shutdown"><p>The server is shutting down…</p></div>';
         }
-    }, { signal: controller.signal });
+    }, { signal });
 }
 
 function escapeHtml(str) {

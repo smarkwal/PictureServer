@@ -2,16 +2,13 @@ import * as api from '../api.js';
 import { renderBreadcrumb } from '../components/breadcrumb.js';
 import { renderMenu } from '../components/menu.js';
 
-let controller = new AbortController();
-
-export async function render(appEl, path, navigate) {
-    controller.abort();
-    controller = new AbortController();
+export async function render(appEl, path, navigate, showLogin, signal) {
     appEl.innerHTML = '<div class="page-picture"><p style="padding:20px">Loading…</p></div>';
     let data;
     try {
         data = await api.getPicture(path);
     } catch (err) {
+        if (err.status === 401) { showLogin(); return; }
         appEl.innerHTML = `<div class="page-error"><h1>Error</h1><p>${escapeHtml(err.message)}</p></div>`;
         return;
     }
@@ -99,13 +96,13 @@ export async function render(appEl, path, navigate) {
                 alert('Could not delete: ' + err.message);
             }
         }
-    }, { signal: controller.signal });
+    }, { signal });
 
     document.addEventListener('keydown', e => {
         const idx = data.siblings.indexOf(path);
         if (e.key === 'ArrowLeft' && idx > 0) navigate(data.siblings[idx - 1]);
         if (e.key === 'ArrowRight' && idx < data.siblings.length - 1) navigate(data.siblings[idx + 1]);
-    }, { signal: controller.signal });
+    }, { signal });
 }
 
 function encodeURIPath(path) {
