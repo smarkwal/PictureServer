@@ -36,14 +36,14 @@ final class ImageApiHandler {
         this.panicMonitor = panicMonitor;
     }
 
-    void handle(HttpExchange exchange, String pathSuffix, String sourceIp, String userAgent) throws IOException {
+    void handle(HttpExchange exchange, String pathSuffix) throws IOException {
         if (!"GET".equals(exchange.getRequestMethod())) {
             JsonHelper.sendJson(exchange, 405, Map.of("error", "Method not allowed"));
             return;
         }
 
-        Optional<String> cookie = JsonHelper.readCookie(exchange, sessionManager.cookieName());
-        if (cookie.isEmpty() || !sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent)) {
+        Optional<String> cookie = HttpHelper.readCookie(exchange, sessionManager.cookieName());
+        if (cookie.isEmpty() || !sessionManager.isAuthenticated(cookie.get(), HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange))) {
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
@@ -52,13 +52,13 @@ final class ImageApiHandler {
         try {
             imageFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
         } catch (SecurityException ex) {
-            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
         if (!Files.isRegularFile(imageFsPath) || !ImageTypes.isImageFile(imageFsPath.getFileName().toString())) {
-            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Image not found"));
             return;
         }

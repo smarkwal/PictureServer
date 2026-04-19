@@ -2,9 +2,6 @@ package net.markwalder.pictureserver.web.api;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -40,25 +37,5 @@ final class JsonHelper {
         return MAPPER.readValue(bytes, type);
     }
 
-    static Optional<String> readCookie(HttpExchange exchange, String key) {
-        List<String> cookieHeaders = exchange.getRequestHeaders().getOrDefault("Cookie", List.of());
-        for (String header : cookieHeaders) {
-            for (String part : header.split(";")) {
-                String[] pair = part.trim().split("=", 2);
-                if (pair.length == 2 && key.equals(pair[0])) {
-                    return Optional.of(pair[1]);
-                }
-            }
-        }
-        return Optional.empty();
-    }
 
-    static String getSourceIp(HttpExchange exchange) {
-        return exchange.getRemoteAddress().getAddress().getHostAddress();
-    }
-
-    static String getUserAgent(HttpExchange exchange) {
-        String ua = exchange.getRequestHeaders().getFirst("User-Agent");
-        return ua != null ? ua : "unknown";
-    }
 }

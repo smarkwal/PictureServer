@@ -32,7 +32,7 @@ final class AlbumApiHandler {
         this.panicMonitor = panicMonitor;
     }
 
-    void handle(HttpExchange exchange, String pathSuffix, String sourceIp, String userAgent) throws IOException {
+    void handle(HttpExchange exchange, String pathSuffix) throws IOException {
         if (!"GET".equals(exchange.getRequestMethod())) {
             JsonHelper.sendJson(exchange, 405, Map.of("error", "Method not allowed"));
             return;
@@ -44,13 +44,13 @@ final class AlbumApiHandler {
         try {
             albumFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
         } catch (SecurityException ex) {
-            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
         if (!Files.isDirectory(albumFsPath)) {
-            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Album not found"));
             return;
         }

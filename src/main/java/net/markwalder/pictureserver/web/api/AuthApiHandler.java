@@ -36,11 +36,14 @@ final class AuthApiHandler {
         this.panicMonitor = panicMonitor;
     }
 
-    void handleLogin(HttpExchange exchange, String sourceIp, String userAgent) throws IOException {
+    void handleLogin(HttpExchange exchange) throws IOException {
         if (!"POST".equals(exchange.getRequestMethod())) {
             JsonHelper.sendJson(exchange, 405, Map.of("error", "Method not allowed"));
             return;
         }
+
+        String sourceIp = HttpHelper.getSourceIp(exchange);
+        String userAgent = HttpHelper.getUserAgent(exchange);
 
         LoginRequest request;
         try {
@@ -68,7 +71,7 @@ final class AuthApiHandler {
             JsonHelper.sendJson(exchange, 405, Map.of("error", "Method not allowed"));
             return;
         }
-        Optional<String> sessionId = JsonHelper.readCookie(exchange, sessionManager.cookieName());
+        Optional<String> sessionId = HttpHelper.readCookie(exchange, sessionManager.cookieName());
         sessionId.ifPresent(sessionManager::removeSession);
         exchange.getResponseHeaders().add("Set-Cookie",
                 sessionManager.cookieName() + "=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0");

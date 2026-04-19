@@ -31,7 +31,7 @@ public final class RequestRouter implements HttpHandler {
             if (path.startsWith("/assets/") || "/assets".equals(path)) {
                 StaticAssetHandler.handle(exchange);
             } else if (path.startsWith("/api/") || "/api".equals(path)) {
-                apiRouter.handle(exchange, sourceIp, userAgent);
+                apiRouter.handle(exchange);
             } else {
                 StaticAssetHandler.sendIndex(exchange);
             }

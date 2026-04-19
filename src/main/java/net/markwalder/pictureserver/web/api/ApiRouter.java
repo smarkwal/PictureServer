@@ -33,17 +33,17 @@ public final class ApiRouter {
         this.shutdownHandler = new ShutdownApiHandler(shutdownAction);
     }
 
-    public void handle(HttpExchange exchange, String sourceIp, String userAgent) throws IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
 
         try {
             if ("GET".equals(method) && "/api/session".equals(path)) {
-                sessionHandler.handle(exchange, sourceIp, userAgent);
+                sessionHandler.handle(exchange);
                 return;
             }
             if ("POST".equals(method) && "/api/login".equals(path)) {
-                authHandler.handleLogin(exchange, sourceIp, userAgent);
+                authHandler.handleLogin(exchange);
                 return;
             }
             if ("POST".equals(method) && "/api/logout".equals(path)) {
@@ -51,29 +51,29 @@ public final class ApiRouter {
                 return;
             }
 
-            if (!isAuthenticated(exchange, sourceIp, userAgent)) {
+            if (!isAuthenticated(exchange)) {
                 JsonHelper.sendJson(exchange, 401, Map.of("error", "Not authenticated"));
                 return;
             }
 
             if ("GET".equals(method) && path.startsWith("/api/albums")) {
                 String suffix = path.substring("/api/albums".length());
-                albumHandler.handle(exchange, suffix, sourceIp, userAgent);
+                albumHandler.handle(exchange, suffix);
                 return;
             }
             if ("GET".equals(method) && path.startsWith("/api/pictures")) {
                 String suffix = path.substring("/api/pictures".length());
-                pictureHandler.handleGet(exchange, suffix, sourceIp, userAgent);
+                pictureHandler.handleGet(exchange, suffix);
                 return;
             }
             if ("DELETE".equals(method) && path.startsWith("/api/pictures")) {
                 String suffix = path.substring("/api/pictures".length());
-                pictureHandler.handleDelete(exchange, suffix, sourceIp, userAgent);
+                pictureHandler.handleDelete(exchange, suffix);
                 return;
             }
             if ("GET".equals(method) && path.startsWith("/api/images")) {
                 String suffix = path.substring("/api/images".length());
-                imageHandler.handle(exchange, suffix, sourceIp, userAgent);
+                imageHandler.handle(exchange, suffix);
                 return;
             }
             if ("POST".equals(method) && "/api/shutdown".equals(path)) {
@@ -90,11 +90,13 @@ public final class ApiRouter {
         }
     }
 
-    private boolean isAuthenticated(HttpExchange exchange, String sourceIp, String userAgent) {
-        Optional<String> cookie = JsonHelper.readCookie(exchange, sessionManager.cookieName());
+    private boolean isAuthenticated(HttpExchange exchange) {
+        Optional<String> cookie = HttpHelper.readCookie(exchange, sessionManager.cookieName());
         if (cookie.isEmpty()) {
             return false;
         }
+        String sourceIp = HttpHelper.getSourceIp(exchange);
+        String userAgent = HttpHelper.getUserAgent(exchange);
         if (!sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent)) {
             panicMonitor.recordEvent(ThreatEvent.INVALID_SESSION, sourceIp, userAgent);
             return false;

@@ -30,7 +30,7 @@ final class PictureApiHandler {
         this.panicMonitor = panicMonitor;
     }
 
-    void handleGet(HttpExchange exchange, String pathSuffix, String sourceIp, String userAgent) throws IOException {
+    void handleGet(HttpExchange exchange, String pathSuffix) throws IOException {
         String pictureWebPath = PathSafety.normalizeWebPath(pathSuffix);
         String encodedPictureWebPath = PathSafety.encodeWebPath(pictureWebPath);
 
@@ -38,13 +38,13 @@ final class PictureApiHandler {
         try {
             pictureFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
         } catch (SecurityException ex) {
-            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
         if (!Files.isRegularFile(pictureFsPath) || !ImageTypes.isImageFile(pictureFsPath.getFileName().toString())) {
-            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Picture not found"));
             return;
         }
@@ -63,12 +63,12 @@ final class PictureApiHandler {
         JsonHelper.sendJson(exchange, 200, new PictureResponse(encodedPictureWebPath, src, siblings));
     }
 
-    void handleDelete(HttpExchange exchange, String pathSuffix, String sourceIp, String userAgent) throws IOException {
+    void handleDelete(HttpExchange exchange, String pathSuffix) throws IOException {
         Path pictureFsPath;
         try {
             pictureFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
         } catch (SecurityException ex) {
-            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, sourceIp, userAgent);
+            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
