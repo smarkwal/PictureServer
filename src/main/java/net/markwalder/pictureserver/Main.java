@@ -10,6 +10,7 @@ import com.sun.net.httpserver.HttpServer;
 import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.SettingsLoader;
+import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.web.HtmlRenderer;
 import net.markwalder.pictureserver.web.PictureServerHandler;
 
@@ -25,14 +26,18 @@ public final class Main {
         Settings settings = SettingsLoader.load(settingsFile, cwd);
 
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", settings.port()), 0);
+        SessionManager sessionManager = new SessionManager();
+        Runnable shutdownAction = () -> {
+            server.stop(0);
+            System.exit(0);
+        };
+        PanicMonitor panicMonitor = new PanicMonitor(settings.panic(), sessionManager, shutdownAction);
         PictureServerHandler handler = new PictureServerHandler(
-            settings,
-            new SessionManager(),
-            new HtmlRenderer(),
-                () -> {
-                    server.stop(0);
-                    System.exit(0);
-                });
+                settings,
+                sessionManager,
+                new HtmlRenderer(),
+                shutdownAction,
+                panicMonitor);
 
         server.createContext("/", handler);
         server.setExecutor(Executors.newFixedThreadPool(16));

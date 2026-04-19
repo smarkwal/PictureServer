@@ -30,6 +30,10 @@ public final class SessionManager {
         }
     }
 
+    public void clearAllSessions() {
+        sessions.clear();
+    }
+
     public String cookieName() {
         return COOKIE_NAME;
     }

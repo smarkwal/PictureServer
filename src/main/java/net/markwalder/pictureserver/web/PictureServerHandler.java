@@ -25,6 +25,8 @@ import com.sun.net.httpserver.HttpHandler;
 
 import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
+import net.markwalder.pictureserver.security.PanicMonitor;
+import net.markwalder.pictureserver.security.ThreatEvent;
 
 public final class PictureServerHandler implements HttpHandler {
 
@@ -46,12 +48,14 @@ public final class PictureServerHandler implements HttpHandler {
     private final SessionManager sessionManager;
     private final HtmlRenderer htmlRenderer;
     private final Runnable shutdownAction;
+    private final PanicMonitor panicMonitor;
 
-    public PictureServerHandler(Settings settings, SessionManager sessionManager, HtmlRenderer htmlRenderer, Runnable shutdownAction) {
+    public PictureServerHandler(Settings settings, SessionManager sessionManager, HtmlRenderer htmlRenderer, Runnable shutdownAction, PanicMonitor panicMonitor) {
         this.settings = settings;
         this.sessionManager = sessionManager;
         this.htmlRenderer = htmlRenderer;
         this.shutdownAction = shutdownAction;
+        this.panicMonitor = panicMonitor;
     }
 
     @Override
@@ -59,9 +63,13 @@ public final class PictureServerHandler implements HttpHandler {
         try (exchange) {
             String method = exchange.getRequestMethod();
             String path = exchange.getRequestURI().getPath();
+            String sourceIp = getSourceIp(exchange);
+            String userAgent = getUserAgent(exchange);
+
+            panicMonitor.checkPath(path, sourceIp, userAgent);
 
             if ("/login".equals(path)) {
-                handleLogin(exchange, method);
+                handleLogin(exchange, method, sourceIp, userAgent);
                 return;
             }
 
@@ -80,7 +88,7 @@ public final class PictureServerHandler implements HttpHandler {
                 return;
             }
 
-            if (!isAuthenticated(exchange)) {
+            if (!isAuthenticated(exchange, sourceIp, userAgent)) {
                 redirect(exchange, "/login?next=" + encodePath(path));
                 return;
             }
@@ -100,17 +108,18 @@ public final class PictureServerHandler implements HttpHandler {
                 return;
             }
 
-            handleGalleryPath(exchange);
+            handleGalleryPath(exchange, sourceIp, userAgent);
         } catch (IllegalArgumentException ex) {
             sendHtml(exchange, 400, htmlRenderer.renderErrorPage(400, ex.getMessage()));
         } catch (SecurityException ex) {
+            panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, getSourceIp(exchange), getUserAgent(exchange));
             sendHtml(exchange, 403, htmlRenderer.renderErrorPage(403, ex.getMessage()));
         } catch (IOException | RuntimeException ex) {
             sendHtml(exchange, 500, htmlRenderer.renderErrorPage(500, "Unexpected server error."));
         }
     }
 
-    private void handleLogin(HttpExchange exchange, String method) throws IOException {
+    private void handleLogin(HttpExchange exchange, String method, String sourceIp, String userAgent) throws IOException {
         if ("GET".equals(method)) {
             String next = getQueryParams(exchange).getOrDefault("next", "/");
             sendHtml(exchange, 200, htmlRenderer.renderLoginPage(next, null));
@@ -128,6 +137,7 @@ public final class PictureServerHandler implements HttpHandler {
         String next = form.getOrDefault("next", "/");
 
         if (!settings.username().equals(username) || !settings.password().equals(password)) {
+            panicMonitor.recordEvent(ThreatEvent.FAILED_LOGIN, sourceIp, userAgent);
             sendHtml(exchange, 401, htmlRenderer.renderLoginPage(next, "Username or password does not match settings."));
             return;
         }
@@ -186,7 +196,7 @@ public final class PictureServerHandler implements HttpHandler {
         }
     }
 
-    private void handleGalleryPath(HttpExchange exchange) throws IOException {
+    private void handleGalleryPath(HttpExchange exchange, String sourceIp, String userAgent) throws IOException {
         String requestPath = decodePath(exchange.getRequestURI().getPath());
 
         if (requestPath.endsWith(".html")) {
@@ -197,6 +207,7 @@ public final class PictureServerHandler implements HttpHandler {
         Path fsPath = resolveSafePath(requestPath);
 
         if (!Files.exists(fsPath)) {
+            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, sourceIp, userAgent);
             sendHtml(exchange, 404, htmlRenderer.renderErrorPage(404, "Path not found."));
             return;
         }
@@ -207,6 +218,7 @@ public final class PictureServerHandler implements HttpHandler {
         }
 
         if (!Files.isDirectory(fsPath)) {
+            panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, sourceIp, userAgent);
             sendHtml(exchange, 404, htmlRenderer.renderErrorPage(404, "Not an album directory."));
             return;
         }
@@ -329,9 +341,25 @@ public final class PictureServerHandler implements HttpHandler {
         }
     }
 
-    private boolean isAuthenticated(HttpExchange exchange) {
+    private boolean isAuthenticated(HttpExchange exchange, String sourceIp, String userAgent) {
         Optional<String> cookie = readCookie(exchange, sessionManager.cookieName());
-        return cookie.isPresent() && sessionManager.isAuthenticated(cookie.get());
+        if (cookie.isEmpty()) {
+            return false;
+        }
+        if (!sessionManager.isAuthenticated(cookie.get())) {
+            panicMonitor.recordEvent(ThreatEvent.INVALID_SESSION, sourceIp, userAgent);
+            return false;
+        }
+        return true;
+    }
+
+    private String getSourceIp(HttpExchange exchange) {
+        return exchange.getRemoteAddress().getAddress().getHostAddress();
+    }
+
+    private String getUserAgent(HttpExchange exchange) {
+        String ua = exchange.getRequestHeaders().getFirst("User-Agent");
+        return ua != null ? ua : "unknown";
     }
 
     private Optional<String> readCookie(HttpExchange exchange, String key) {

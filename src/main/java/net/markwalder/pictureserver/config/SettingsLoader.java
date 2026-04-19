@@ -16,7 +16,14 @@ public final class SettingsLoader {
             throw new IllegalStateException("settings.properties not found in current working directory: " + settingsFile);
         }
 
-        Properties props = new Properties();
+        Properties defaults = new Properties();
+        try (InputStream input = SettingsLoader.class.getResourceAsStream("/default-settings.properties")) {
+            if (input != null) {
+                defaults.load(input);
+            }
+        }
+
+        Properties props = new Properties(defaults);
         try (InputStream input = Files.newInputStream(settingsFile)) {
             props.load(input);
         }
@@ -36,7 +43,19 @@ public final class SettingsLoader {
             throw new IllegalStateException("Configured path is not an existing directory: " + root);
         }
 
-        return new Settings(root, port, username, password);
+        Settings.PanicSettings panic = new Settings.PanicSettings(
+                asBoolean(props.getProperty("panic.enabled")),
+                asBoolean(props.getProperty("panic.pathTraversal.enabled")),
+                asBoolean(props.getProperty("panic.knownAttackProbe.enabled")),
+                asPositiveInt(props.getProperty("panic.failedLogins.threshold"), "panic.failedLogins.threshold"),
+                asPositiveInt(props.getProperty("panic.failedLogins.windowSeconds"), "panic.failedLogins.windowSeconds"),
+                asPositiveInt(props.getProperty("panic.invalidSession.threshold"), "panic.invalidSession.threshold"),
+                asPositiveInt(props.getProperty("panic.invalidSession.windowSeconds"), "panic.invalidSession.windowSeconds"),
+                asPositiveInt(props.getProperty("panic.excessive404.threshold"), "panic.excessive404.threshold"),
+                asPositiveInt(props.getProperty("panic.excessive404.windowSeconds"), "panic.excessive404.windowSeconds")
+        );
+
+        return new Settings(root, port, username, password, panic);
     }
 
     private static String asNonBlankString(String value, String key) {
@@ -44,6 +63,10 @@ public final class SettingsLoader {
             throw new IllegalStateException("Missing or invalid '" + key + "' in settings.properties");
         }
         return value.trim();
+    }
+
+    private static boolean asBoolean(String value) {
+        return Boolean.parseBoolean(value);
     }
 
     private static int asPort(String value) {
@@ -61,5 +84,21 @@ public final class SettingsLoader {
             throw new IllegalStateException("Port must be between 1 and 65535");
         }
         return port;
+    }
+
+    private static int asPositiveInt(String value, String key) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalStateException("Missing or invalid '" + key + "' in settings.properties");
+        }
+        int result;
+        try {
+            result = Integer.parseInt(value.trim());
+        } catch (NumberFormatException ex) {
+            throw new IllegalStateException("Invalid '" + key + "' in settings.properties", ex);
+        }
+        if (result < 1) {
+            throw new IllegalStateException("Value of '" + key + "' must be at least 1");
+        }
+        return result;
     }
 }
