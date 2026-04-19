@@ -43,7 +43,7 @@ public final class BreadcrumbComponent implements UiComponent {
                         .append("</span>");
             } else {
                 out.append("<a href=\"")
-                        .append(HtmlEscaper.escape(runningPath.toString()))
+                        .append(HtmlEscaper.escape(UrlEncoder.encodePath(runningPath.toString())))
                         .append("\">")
                         .append(HtmlEscaper.escape(part))
                         .append("</a>");

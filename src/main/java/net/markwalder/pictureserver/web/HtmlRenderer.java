@@ -6,6 +6,7 @@ import net.markwalder.pictureserver.web.ui.AlbumGridComponent;
 import net.markwalder.pictureserver.web.ui.BreadcrumbComponent;
 import net.markwalder.pictureserver.web.ui.ConfirmationDialogComponent;
 import net.markwalder.pictureserver.web.ui.HtmlEscaper;
+import net.markwalder.pictureserver.web.ui.UrlEncoder;
 import net.markwalder.pictureserver.web.ui.MenuDialogItemComponent;
 import net.markwalder.pictureserver.web.ui.MenuLinkItemComponent;
 import net.markwalder.pictureserver.web.ui.UiComponent;
@@ -121,7 +122,7 @@ public final class HtmlRenderer {
                 String siblingName = sibling.contains("/") ? sibling.substring(sibling.lastIndexOf('/') + 1) : sibling;
                 boolean isCurrent = sibling.equals(displayPath);
                 sidebarHtml.append("<a href=\"")
-                        .append(HtmlEscaper.escape(sibling + ".html"))
+                        .append(HtmlEscaper.escape(UrlEncoder.encodePath(sibling) + ".html"))
                         .append("\" class=\"sidebar-thumb")
                         .append(isCurrent ? " sidebar-thumb-current" : "")
                         .append("\" title=\"")
@@ -129,7 +130,7 @@ public final class HtmlRenderer {
                         .append("\"><img class=\"sidebar-thumb-image")
                         .append(isCurrent ? " sidebar-thumb-image-current" : "")
                         .append("\" src=\"")
-                        .append(HtmlEscaper.escape(sibling))
+                        .append(HtmlEscaper.escape(UrlEncoder.encodePath(sibling)))
                         .append("\" alt=\"")
                         .append(HtmlEscaper.escape(siblingName))
                         .append("\"></a>");
@@ -173,7 +174,7 @@ public final class HtmlRenderer {
                 breadcrumb,
                 userMenu,
                 sidebarHtml.toString(),
-                HtmlEscaper.escape(imageSrc),
+                HtmlEscaper.escape(UrlEncoder.encodePath(imageSrc)),
                 HtmlEscaper.escape(displayPath),
                 confirmationDialog);
     }

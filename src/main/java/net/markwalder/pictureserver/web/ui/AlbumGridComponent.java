@@ -20,7 +20,7 @@ public final class AlbumGridComponent implements UiComponent {
         for (String album : albums) {
             String href = joinPaths(currentPath, album);
             grid.append("<a class=\"tile album\" href=\"")
-                    .append(HtmlEscaper.escape(href))
+                    .append(HtmlEscaper.escape(UrlEncoder.encodePath(href)))
                     .append("\"><span class=\"icon\">📁</span><span>")
                     .append(HtmlEscaper.escape(album))
                     .append("</span></a>");
@@ -30,9 +30,9 @@ public final class AlbumGridComponent implements UiComponent {
             String filePath = joinPaths(currentPath, picture);
             String href = filePath + ".html";
             grid.append("<a class=\"tile picture\" href=\"")
-                    .append(HtmlEscaper.escape(href))
+                    .append(HtmlEscaper.escape(UrlEncoder.encodePath(href)))
                     .append("\"><div class=\"picture-thumb-box\"><img class=\"picture-thumb\" src=\"")
-                    .append(HtmlEscaper.escape(filePath))
+                    .append(HtmlEscaper.escape(UrlEncoder.encodePath(filePath)))
                     .append("\" alt=\"")
                     .append(HtmlEscaper.escape(picture))
                     .append("\"></div></a>");
