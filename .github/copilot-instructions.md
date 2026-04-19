@@ -58,6 +58,58 @@ src/test/java/net/markwalder/pictureserver/
 - Assert on `IllegalStateException` messages for settings validation tests.
 - Add tests under `src/test/java/net/markwalder/pictureserver/` mirroring the main package structure.
 
+## Commit Message Conventions
+
+Every commit message subject line must follow this structure:
+
+```text
+<Type>: [<Area>:] <Message>
+```
+
+### Type
+
+Use one of two groups:
+
+**User-facing changes** (affect features, UI, or behavior visible to end users):
+- `Feature` — new functionality
+- `Change` — modification to existing behavior
+- `Bugfix` — correction of a defect
+
+**Internal-only changes** (no effect on production behavior or user experience):
+- `Code` — refactoring, formatting, or non-test source changes
+- `Tests` — adding or modifying tests
+- `Docs` — documentation updates
+- `Project` — build, CI, dependencies, tooling
+
+### Area (optional)
+
+For user-facing types, append a concise area name after the type to identify the affected feature or component (e.g., `Authentication`, `Album Grid`, `Breadcrumbs`, `Picture Page`, `Logout Action`). Omit the area when the change is cross-cutting or no single area dominates. Do not use Java class names, file names, or internal IDs as area names — use terms familiar to end users.
+
+For internal types (`Code`, `Tests`, `Docs`, `Project`), the area is rarely needed and should be omitted unless it aids clarity.
+
+### Message
+
+- Write in imperative mood: "Add …", "Fix …", "Upgrade …" (not "Added …" or "Adding …").
+- The entire subject line (type + area + message) should not exceed 120 characters.
+- Do not reference Java class names, file names, or internal IDs in user-facing commit messages.
+
+### Examples
+
+```
+Feature: Picture Page: Add "Next" and "Back" buttons
+Change: Authentication: Lock user after 3 failed login attempts
+Bugfix: Logout Action: Fix layout of "Logout" button
+Tests: Implement unit tests for UrlEncoder
+Code: Reformat Java code for web UI components
+Docs: Add instructions for commit messages
+Project: Upgrade to latest Gradle version
+```
+
+### AI agent guidance
+
+After completing work on a task, always suggest a commit message following these conventions before finishing.
+If the work in a session covers multiple tasks, suggest a commit message for each task.
+
 ## Context7 Libraries
 
 When looking up API docs or code examples for the libraries used in this project, use these Context7 library IDs:
