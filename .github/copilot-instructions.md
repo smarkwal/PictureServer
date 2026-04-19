@@ -16,31 +16,38 @@ A Java application that hosts an embedded HTTP server for browsing pictures stor
 
 ```text
 src/main/java/net/markwalder/pictureserver/
+  Logger.java                     # Logging utility
   Main.java                       # Entry point, HttpServer bootstrap
-  config/
-    Settings.java                 # Record: rootDirectory, port, password
-    SettingsLoader.java           # Reads settings.properties from CWD
   auth/
     SessionManager.java           # Server-side session map, cookie name PSSESSION
+  config/
+    Settings.java                 # Record: rootDirectory, port, username, password, panic
+    SettingsLoader.java           # Reads settings.properties from CWD
+  security/
+    PanicMonitor.java             # Threat detection and panic mode
+    ThreatEvent.java              # Threat event types enum
   web/
-    PictureServerHandler.java     # Routes, auth guard, path safety, album/image logic
     HtmlRenderer.java             # Inline HTML rendering (no template engine)
+    PictureServerHandler.java     # Routes, auth guard, path safety, album/image logic
     ui/
-      UiComponent.java            # Simple UI component contract
-      HtmlEscaper.java            # HTML escaping utility
-      BreadcrumbComponent.java    # Breadcrumb rendering
       AlbumGridComponent.java     # Album/picture grid rendering
-      UserMenuComponent.java      # User menu container rendering
-      MenuLinkItemComponent.java  # Menu link item rendering
-      MenuDialogItemComponent.java # Menu action button rendering
+      BreadcrumbComponent.java    # Breadcrumb rendering
       ConfirmationDialogComponent.java # Reusable confirmation dialog rendering
+      HtmlEscaper.java            # HTML escaping utility
+      MenuDialogItemComponent.java # Menu action button rendering
+      MenuLinkItemComponent.java  # Menu link item rendering
+      UiComponent.java            # Simple UI component contract
+      UrlEncoder.java             # URL path encoding utility
+      UserMenuComponent.java      # User menu container rendering
 src/test/java/net/markwalder/pictureserver/
   config/SettingsLoaderTest.java  # Unit tests for settings parsing/validation
+  security/PanicMonitorTest.java  # Unit tests for panic monitor
+  web/ui/UrlEncoderTest.java      # Unit tests for URL encoding
 ```
 
 ## Key Conventions
 
-- **Authentication**: Plain-text password comparison against `settings.properties`. Session persisted in `SessionManager` with a browser-session cookie (`PSSESSION`).
+- **Authentication**: Plain-text username/password comparison against `settings.properties`. Session persisted in `SessionManager` with a browser-session cookie (`PSSESSION`).
 - **Path safety**: All URL paths are resolved against the configured root via `resolveSafePath()` in `PictureServerHandler`. Never bypass or weaken this check.
 - **HTML**: Rendered inline in `HtmlRenderer` as Java text blocks — no external template engine.
 - **Classes**: `final` with private constructors for utility/service classes; records for data-only types (`Settings`).

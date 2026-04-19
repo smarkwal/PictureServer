@@ -10,7 +10,7 @@ argument-hint: 'Optional: scope to a specific doc file (e.g. "README.md only") o
 
 - After adding, removing, or renaming source files, packages, or classes
 - After changing the build system, dependencies, or Java version
-- After adding new configuration keys or changing `settings.yaml` structure
+- After adding new configuration keys or changing `settings.properties` structure
 - After adding new features or endpoints that should be documented
 - Periodically to keep onboarding docs accurate
 
@@ -31,7 +31,7 @@ Run these checks to establish facts before comparing to docs:
 
 **Java version and dependencies**
 ```bash
-grep -E "javaVersion|sourceCompatibility|toolchain|junit|snakeyaml" build.gradle.kts
+grep -E "javaVersion|sourceCompatibility|toolchain|junit" build.gradle.kts
 ```
 
 **Actual source layout**
@@ -46,7 +46,7 @@ find src -name "*.java" | sort
 ./gradlew tasks --all 2>/dev/null | grep -E "run|test|clean|jar|fatJar"
 ```
 
-**`settings.yaml` keys** — confirm from `SettingsLoader.java` and the example in the repo root.
+**`settings.properties` keys** — confirm from `SettingsLoader.java` and the example in the repo root.
 
 ### 2. Compare docs to ground truth
 
@@ -54,7 +54,7 @@ For each document, check:
 
 #### README.md
 - [ ] Project description matches actual functionality
-- [ ] `settings.yaml` example uses the correct keys (`path`, `port`, `password`)
+- [ ] `settings.properties` example uses the correct keys (`path`, `port`, `username`, `password`)
 - [ ] Build/run commands exist as real Gradle tasks
 - [ ] No references to removed features or old class names
 
@@ -74,7 +74,7 @@ For each document, check:
 
 Check for duplicated content blocks between docs, especially between `README.md` and `.github/copilot-instructions.md`:
 
-- Setup/configuration examples (`settings.yaml` blocks)
+- Setup/configuration examples (`settings.properties` blocks)
 - Build/run/test command snippets
 - Project overview paragraphs copied verbatim
 
@@ -100,7 +100,7 @@ For duplication findings, include an explicit dedup proposal:
 
 | Files                                           | Duplicated section      | Canonical source | Suggested dedup                                                             |
 | ----------------------------------------------- | ----------------------- | ---------------- | --------------------------------------------------------------------------- |
-| `README.md` + `.github/copilot-instructions.md` | `settings.yaml` example | `README.md`      | Keep full YAML in README, replace in copilot instructions with "See README" |
+| `README.md` + `.github/copilot-instructions.md` | `settings.properties` example | `README.md`      | Keep full properties in README, replace in copilot instructions with "See README" |
 
 ### 4. Apply confirmed fixes
 
