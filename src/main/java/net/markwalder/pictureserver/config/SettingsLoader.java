@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-
-import org.yaml.snakeyaml.Yaml;
+import java.util.Properties;
 
 public final class SettingsLoader {
 
@@ -15,25 +13,18 @@ public final class SettingsLoader {
 
     public static Settings load(Path settingsFile, Path cwd) throws IOException {
         if (!Files.exists(settingsFile)) {
-            throw new IllegalStateException("settings.yaml not found in current working directory: " + settingsFile);
+            throw new IllegalStateException("settings.properties not found in current working directory: " + settingsFile);
         }
 
-        Map<String, Object> map;
+        Properties props = new Properties();
         try (InputStream input = Files.newInputStream(settingsFile)) {
-            Yaml yaml = new Yaml();
-            Object parsed = yaml.load(input);
-            if (!(parsed instanceof Map<?, ?> rawMap)) {
-                throw new IllegalStateException("settings.yaml must contain key-value pairs");
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> cast = (Map<String, Object>) rawMap;
-            map = cast;
+            props.load(input);
         }
 
-        String pathValue = asNonBlankString(map.get("path"), "path");
-        String username = asNonBlankString(map.get("username"), "username");
-        String password = asNonBlankString(map.get("password"), "password");
-        int port = asPort(map.get("port"));
+        String pathValue = asNonBlankString(props.getProperty("path"), "path");
+        String username = asNonBlankString(props.getProperty("username"), "username");
+        String password = asNonBlankString(props.getProperty("password"), "password");
+        int port = asPort(props.getProperty("port"));
 
         Path root = Path.of(pathValue);
         if (!root.isAbsolute()) {
@@ -48,29 +39,23 @@ public final class SettingsLoader {
         return new Settings(root, port, username, password);
     }
 
-    private static String asNonBlankString(Object value, String key) {
-        if (!(value instanceof String stringValue)) {
-            throw new IllegalStateException("Missing or invalid '" + key + "' in settings.yaml");
+    private static String asNonBlankString(String value, String key) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalStateException("Missing or invalid '" + key + "' in settings.properties");
         }
-        String trimmed = stringValue.trim();
-        if (trimmed.isEmpty()) {
-            throw new IllegalStateException("Missing or invalid '" + key + "' in settings.yaml");
-        }
-        return trimmed;
+        return value.trim();
     }
 
-    private static int asPort(Object value) {
-        int port = switch (value) {
-            case Number number -> number.intValue();
-            case String stringPort -> {
-                try {
-                    yield Integer.parseInt(stringPort.trim());
-                } catch (NumberFormatException ex) {
-                    throw new IllegalStateException("Invalid 'port' in settings.yaml", ex);
-                }
-            }
-            default -> throw new IllegalStateException("Missing or invalid 'port' in settings.yaml");
-        };
+    private static int asPort(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalStateException("Missing or invalid 'port' in settings.properties");
+        }
+        int port;
+        try {
+            port = Integer.parseInt(value.trim());
+        } catch (NumberFormatException ex) {
+            throw new IllegalStateException("Invalid 'port' in settings.properties", ex);
+        }
 
         if (port < 1 || port > 65535) {
             throw new IllegalStateException("Port must be between 1 and 65535");

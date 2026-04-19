@@ -4,13 +4,13 @@ A Java application serving pictures from a directory with album-style browsing a
 
 ## Configuration
 
-Create `settings.yaml` in the current working directory:
+Create `settings.properties` in the current working directory:
 
-```yaml
-path: ./pictures
-port: 8080
-username: admin
-password: secret
+```properties
+path = ./pictures
+port = 8088
+username = admin
+password = secret
 ```
 
 ## Run

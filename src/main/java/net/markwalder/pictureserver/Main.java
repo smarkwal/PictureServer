@@ -20,7 +20,7 @@ public final class Main {
 
     public static void main(String[] args) throws IOException {
         Path cwd = Path.of(System.getProperty("user.dir"));
-        Path settingsFile = cwd.resolve("settings.yaml");
+        Path settingsFile = cwd.resolve("settings.properties");
 
         Settings settings = SettingsLoader.load(settingsFile, cwd);
 

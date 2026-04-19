@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-A Java application that hosts an embedded HTTP server for browsing pictures stored on disk via a password-protected, album-style web UI. Configuration is loaded from `settings.yaml` in the current working directory.
+A Java application that hosts an embedded HTTP server for browsing pictures stored on disk via a password-protected, album-style web UI. Configuration is loaded from `settings.properties` in the current working directory.
 
 ## Tech Stack
 
 - **Language**: Java 25
 - **Build**: Gradle 9+ with Kotlin DSL (`build.gradle.kts`)
 - **HTTP server**: Plain JDK `com.sun.net.httpserver.HttpServer` — no web frameworks
-- **YAML parsing**: SnakeYAML 2.x
+- **Configuration**: Java `java.util.Properties` (no external libraries)
 - **Tests**: JUnit 6 (Jupiter) via `@Test`, `@TempDir`; no mocking libraries
 
 ## Source Layout
@@ -19,7 +19,7 @@ src/main/java/net/markwalder/pictureserver/
   Main.java                       # Entry point, HttpServer bootstrap
   config/
     Settings.java                 # Record: rootDirectory, port, password
-    SettingsLoader.java           # Reads settings.yaml from CWD
+    SettingsLoader.java           # Reads settings.properties from CWD
   auth/
     SessionManager.java           # Server-side session map, cookie name PSSESSION
   web/
@@ -40,7 +40,7 @@ src/test/java/net/markwalder/pictureserver/
 
 ## Key Conventions
 
-- **Authentication**: Plain-text password comparison against `settings.yaml`. Session persisted in `SessionManager` with a browser-session cookie (`PSSESSION`).
+- **Authentication**: Plain-text password comparison against `settings.properties`. Session persisted in `SessionManager` with a browser-session cookie (`PSSESSION`).
 - **Path safety**: All URL paths are resolved against the configured root via `resolveSafePath()` in `PictureServerHandler`. Never bypass or weaken this check.
 - **HTML**: Rendered inline in `HtmlRenderer` as Java text blocks — no external template engine.
 - **Classes**: `final` with private constructors for utility/service classes; records for data-only types (`Settings`).
@@ -67,4 +67,3 @@ When looking up API docs or code examples for the libraries used in this project
 | Java SE 25 / JDK 25 (standard library, APIs) | `/websites/oracle_en_java_javase_25` |
 | Gradle 9.4.1 (Kotlin DSL, tasks, dependencies) | `/websites/gradle_9_4_1` |
 | JUnit 6 / Jupiter (tests, assertions, extensions) | `/junit-team/junit-framework` |
-| SnakeYAML (YAML parsing/loading) | `/snakeyaml/snakeyaml` |
