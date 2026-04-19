@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,6 +27,20 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 
 public final class PictureServerHandler implements HttpHandler {
+
+    private static final Map<String, String> IMAGE_MIME_TYPES = Map.of(
+            ".jpg", "image/jpeg",
+            ".jpeg", "image/jpeg",
+            ".png", "image/png",
+            ".gif", "image/gif",
+            ".webp", "image/webp",
+            ".bmp", "image/bmp"
+    );
+
+    private static final Set<String> IGNORED_FOLDER_NAMES = Set.of(
+            "Photos Library.photoslibrary",
+            "Photo Booth Library"
+    );
 
     private final Settings settings;
     private final SessionManager sessionManager;
@@ -202,7 +217,7 @@ public final class PictureServerHandler implements HttpHandler {
         try (Stream<Path> list = Files.list(fsPath)) {
             for (Path child : list.sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase(Locale.ROOT))).toList()) {
                 String name = child.getFileName().toString();
-                if (Files.isDirectory(child)) {
+                if (Files.isDirectory(child) && !IGNORED_FOLDER_NAMES.contains(name)) {
                     albums.add(name);
                 } else if (Files.isRegularFile(child) && isImageFile(name)) {
                     pictures.add(name);
@@ -446,25 +461,16 @@ public final class PictureServerHandler implements HttpHandler {
 
     private boolean isImageFile(String filename) {
         String lower = filename.toLowerCase(Locale.ROOT);
-        return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png")
-                || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".bmp");
+        return IMAGE_MIME_TYPES.keySet().stream().anyMatch(lower::endsWith);
     }
 
     private String mimeType(String filename) {
         String lower = filename.toLowerCase(Locale.ROOT);
-        if (lower.endsWith(".png")) {
-            return "image/png";
-        }
-        if (lower.endsWith(".gif")) {
-            return "image/gif";
-        }
-        if (lower.endsWith(".webp")) {
-            return "image/webp";
-        }
-        if (lower.endsWith(".bmp")) {
-            return "image/bmp";
-        }
-        return "image/jpeg";
+        return IMAGE_MIME_TYPES.entrySet().stream()
+                .filter(e -> lower.endsWith(e.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse("application/octet-stream");
     }
 
     private boolean moveToTrash(Path imagePath) {
