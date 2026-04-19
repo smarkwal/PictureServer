@@ -57,11 +57,14 @@ final class AlbumApiHandler {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(albumFsPath);
 
+        String encodedAlbumWebPath = PathSafety.encodeWebPath(albumWebPath);
         String base = "/".equals(albumWebPath) ? "" : albumWebPath;
         Map<String, String> albumPreviews = new LinkedHashMap<>();
-        info.albumFirstImages().forEach((album, firstImage) ->
-                albumPreviews.put(album, "/api/images" + base + "/" + album + "/" + firstImage));
+        info.albumFirstImages().forEach((album, firstImage) -> {
+            String previewPath = base + "/" + album + "/" + firstImage;
+            albumPreviews.put(album, "/api/images" + PathSafety.encodeWebPath(previewPath));
+        });
 
-        JsonHelper.sendJson(exchange, 200, new AlbumResponse(albumWebPath, info.albums(), albumPreviews, info.pictures()));
+        JsonHelper.sendJson(exchange, 200, new AlbumResponse(encodedAlbumWebPath, info.albums(), albumPreviews, info.pictures()));
     }
 }

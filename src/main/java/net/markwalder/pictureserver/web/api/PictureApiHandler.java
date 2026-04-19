@@ -32,6 +32,7 @@ final class PictureApiHandler {
 
     void handleGet(HttpExchange exchange, String pathSuffix, String sourceIp, String userAgent) throws IOException {
         String pictureWebPath = PathSafety.normalizeWebPath(pathSuffix);
+        String encodedPictureWebPath = PathSafety.encodeWebPath(pictureWebPath);
 
         Path pictureFsPath;
         try {
@@ -55,11 +56,11 @@ final class PictureApiHandler {
 
         List<String> siblings = new ArrayList<>();
         for (String name : info.siblingNames()) {
-            siblings.add(parentPrefix + "/" + name);
+            siblings.add(PathSafety.encodeWebPath(parentPrefix + "/" + name));
         }
 
-        String src = "/api/images" + pictureWebPath;
-        JsonHelper.sendJson(exchange, 200, new PictureResponse(pictureWebPath, src, siblings));
+        String src = "/api/images" + encodedPictureWebPath;
+        JsonHelper.sendJson(exchange, 200, new PictureResponse(encodedPictureWebPath, src, siblings));
     }
 
     void handleDelete(HttpExchange exchange, String pathSuffix, String sourceIp, String userAgent) throws IOException {

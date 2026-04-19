@@ -1,6 +1,7 @@
 package net.markwalder.pictureserver.web;
 
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -55,6 +56,23 @@ public final class PathSafety {
             return "/";
         }
         return currentPath.substring(0, index);
+    }
+
+    public static String encodeWebPath(String path) {
+        String normalized = normalizeWebPath(path);
+        if ("/".equals(normalized)) {
+            return "/";
+        }
+
+        String[] parts = normalized.split("/");
+        List<String> encoded = new ArrayList<>();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                encoded.add(URLEncoder.encode(part, StandardCharsets.UTF_8).replace("+", "%20"));
+            }
+        }
+
+        return "/" + String.join("/", encoded);
     }
 
     private static String decode(String path) {
