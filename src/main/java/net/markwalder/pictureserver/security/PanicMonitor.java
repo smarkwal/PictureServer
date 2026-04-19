@@ -35,6 +35,7 @@ public final class PanicMonitor {
         String lower = path.toLowerCase();
         boolean isAttackProbe = KNOWN_ATTACK_PATH_PREFIXES.stream().anyMatch(lower::startsWith);
         if (isAttackProbe) {
+            logEvent(ThreatEvent.KNOWN_ATTACK_PROBE, sourceIp, userAgent, "path=" + path);
             triggerPanic(ThreatEvent.KNOWN_ATTACK_PROBE, sourceIp, userAgent);
         }
     }
@@ -44,11 +45,13 @@ public final class PanicMonitor {
         switch (event) {
             case PATH_TRAVERSAL_ATTEMPT -> {
                 if (settings.pathTraversalEnabled()) {
+                    logEvent(event, sourceIp, userAgent, null);
                     triggerPanic(event, sourceIp, userAgent);
                 }
             }
             case KNOWN_ATTACK_PROBE -> {
                 if (settings.knownAttackProbeEnabled()) {
+                    logEvent(event, sourceIp, userAgent, null);
                     triggerPanic(event, sourceIp, userAgent);
                 }
             }
@@ -76,8 +79,17 @@ public final class PanicMonitor {
             count = timestamps.size();
         }
 
+        logEvent(event, sourceIp, userAgent, "count=" + count + "/" + threshold);
         if (count >= threshold) {
             triggerPanic(event, sourceIp, userAgent);
+        }
+    }
+
+    private void logEvent(ThreatEvent event, String sourceIp, String userAgent, String details) {
+        if (details != null) {
+            System.out.printf("SECURITY EVENT: %s from %s (User-Agent: %s, %s)%n", event, sourceIp, userAgent, details);
+        } else {
+            System.out.printf("SECURITY EVENT: %s from %s (User-Agent: %s)%n", event, sourceIp, userAgent);
         }
     }
 
