@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import net.markwalder.pictureserver.Logger;
 import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 
@@ -87,9 +88,9 @@ public final class PanicMonitor {
 
     private void logEvent(ThreatEvent event, String sourceIp, String userAgent, String details) {
         if (details != null) {
-            System.out.printf("SECURITY EVENT: %s from %s (User-Agent: %s, %s)%n", event, sourceIp, userAgent, details);
+            Logger.log("SECURITY EVENT: %s from %s (User-Agent: %s, %s)", event, sourceIp, userAgent, details);
         } else {
-            System.out.printf("SECURITY EVENT: %s from %s (User-Agent: %s)%n", event, sourceIp, userAgent);
+            Logger.log("SECURITY EVENT: %s from %s (User-Agent: %s)", event, sourceIp, userAgent);
         }
     }
 
@@ -97,7 +98,7 @@ public final class PanicMonitor {
         if (!panicking.compareAndSet(false, true)) {
             return;
         }
-        System.out.printf("PANIC MODE: %s from %s (User-Agent: %s) — shutting down%n", event, sourceIp, userAgent);
+        Logger.log("PANIC MODE: %s from %s (User-Agent: %s) — shutting down", event, sourceIp, userAgent);
         sessionManager.clearAllSessions();
         new Thread(shutdownAction, "panic-shutdown-thread").start();
     }

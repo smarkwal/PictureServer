@@ -45,6 +45,6 @@ public final class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
 
         server.start();
-        System.out.printf("Picture server listening on http://0.0.0.0:%d with root %s%n", settings.port(), settings.rootDirectory());
+        Logger.log("Picture server listening on http://0.0.0.0:%d with root %s", settings.port(), settings.rootDirectory());
     }
 }
