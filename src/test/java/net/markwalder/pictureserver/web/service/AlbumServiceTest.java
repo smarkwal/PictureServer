@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -24,12 +22,8 @@ class AlbumServiceTest {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertEquals(2, info.albums().size());
-        assertEquals("Apple", info.albums().get(0));
-        assertEquals("Zebra", info.albums().get(1));
-        assertEquals(2, info.pictures().size());
-        assertEquals("photo_a.jpg", info.pictures().get(0));
-        assertEquals("photo_b.jpg", info.pictures().get(1));
+        assertThat(info.albums()).containsExactly("Apple", "Zebra");
+        assertThat(info.pictures()).containsExactly("photo_a.jpg", "photo_b.jpg");
     }
 
     @Test
@@ -40,7 +34,7 @@ class AlbumServiceTest {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertEquals("a_first.jpg", info.albumFirstImages().get("Vacation"));
+        assertThat(info.albumFirstImages()).containsEntry("Vacation", "a_first.jpg");
     }
 
     @Test
@@ -49,7 +43,7 @@ class AlbumServiceTest {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertFalse(info.albumFirstImages().containsKey("EmptyAlbum"));
+        assertThat(info.albumFirstImages()).doesNotContainKey("EmptyAlbum");
     }
 
     @Test
@@ -60,17 +54,16 @@ class AlbumServiceTest {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertEquals(1, info.albums().size());
-        assertEquals("NormalAlbum", info.albums().get(0));
+        assertThat(info.albums()).containsExactly("NormalAlbum");
     }
 
     @Test
     void emptyDirectoryReturnsEmptyLists() throws IOException {
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertTrue(info.albums().isEmpty());
-        assertTrue(info.pictures().isEmpty());
-        assertTrue(info.albumFirstImages().isEmpty());
+        assertThat(info.albums()).isEmpty();
+        assertThat(info.pictures()).isEmpty();
+        assertThat(info.albumFirstImages()).isEmpty();
     }
 
     @Test
@@ -81,8 +74,7 @@ class AlbumServiceTest {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertEquals(1, info.pictures().size());
-        assertEquals("photo.jpg", info.pictures().get(0));
+        assertThat(info.pictures()).containsExactly("photo.jpg");
     }
 
     @Test
@@ -93,6 +85,6 @@ class AlbumServiceTest {
 
         AlbumService.AlbumInfo info = AlbumService.listAlbum(tempDir);
 
-        assertEquals(6, info.pictures().size());
+        assertThat(info.pictures()).hasSize(6);
     }
 }

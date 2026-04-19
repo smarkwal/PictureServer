@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -23,10 +22,7 @@ class PictureServiceTest {
 
         PictureService.PictureInfo info = PictureService.getPictureInfo(target);
 
-        assertEquals(3, info.siblingNames().size());
-        assertEquals("a_first.jpg", info.siblingNames().get(0));
-        assertEquals("m_middle.jpg", info.siblingNames().get(1));
-        assertEquals("z_last.jpg", info.siblingNames().get(2));
+        assertThat(info.siblingNames()).containsExactly("a_first.jpg", "m_middle.jpg", "z_last.jpg");
     }
 
     @Test
@@ -36,8 +32,7 @@ class PictureServiceTest {
 
         PictureService.PictureInfo info = PictureService.getPictureInfo(target);
 
-        assertEquals(1, info.siblingNames().size());
-        assertEquals("only.jpg", info.siblingNames().get(0));
+        assertThat(info.siblingNames()).containsExactly("only.jpg");
     }
 
     @Test
@@ -48,8 +43,7 @@ class PictureServiceTest {
 
         PictureService.PictureInfo info = PictureService.getPictureInfo(target);
 
-        assertEquals(1, info.siblingNames().size());
-        assertEquals("photo.jpg", info.siblingNames().get(0));
+        assertThat(info.siblingNames()).containsExactly("photo.jpg");
     }
 
     @Test
@@ -59,6 +53,6 @@ class PictureServiceTest {
 
         PictureService.PictureInfo info = PictureService.getPictureInfo(fakePicture);
 
-        assertTrue(info.siblingNames().isEmpty());
+        assertThat(info.siblingNames()).isEmpty();
     }
 }

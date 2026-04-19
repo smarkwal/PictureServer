@@ -12,7 +12,7 @@ A Java application that hosts an embedded HTTP server for browsing pictures stor
 - **JSON**: Jackson Databind 2.19.0 — strict deserialization, `@JsonCreator`/`@JsonProperty` on all request POJOs
 - **Frontend**: Vanilla JS ES modules (no framework); static assets served from classpath `/assets/`
 - **Configuration**: Java `java.util.Properties` (no external libraries)
-- **Tests**: JUnit 6 (Jupiter) via `@Test`, `@TempDir`; no mocking libraries
+- **Tests**: JUnit 6 (Jupiter) via `@Test`, `@TempDir`; Mockito 5 for mocking; AssertJ 3 for assertions
 
 ## Source Layout
 
@@ -150,3 +150,5 @@ When looking up API docs or code examples for the libraries used in this project
 | Gradle 9.4.1 (Kotlin DSL, tasks, dependencies)    | `/websites/gradle_9_4_1`                      |
 | JUnit 6 / Jupiter (tests, assertions, extensions) | `/junit-team/junit-framework`                 |
 | Jackson Databind 2.19.0 (JSON serialization)      | `/fasterxml/jackson-databind`                 |
+| Mockito 5 (mocking)                               | `/mockito/mockito`                            |
+| AssertJ 3 (fluent assertions)                     | `/assertj/assertj`                            |
