@@ -52,10 +52,10 @@ Flag any class with zero hits as a candidate for removal.
 
 Present a table of candidates grouped by type before making any changes:
 
-| Type | Location | Symbol | Reason |
-|------|----------|--------|--------|
-| Unused parameter | `HtmlRenderer.java:45` | `parentPath` | Never read in method body |
-| Unused CSS rule | `styles.css:239` | `.nav-spacer` | No HTML element uses this class |
+| Type             | Location               | Symbol        | Reason                          |
+| ---------------- | ---------------------- | ------------- | ------------------------------- |
+| Unused parameter | `HtmlRenderer.java:45` | `parentPath`  | Never read in method body       |
+| Unused CSS rule  | `styles.css:239`       | `.nav-spacer` | No HTML element uses this class |
 
 Ask the user to confirm before proceeding with removals.
 

@@ -62,8 +62,8 @@ src/test/java/net/markwalder/pictureserver/
 
 When looking up API docs or code examples for the libraries used in this project, use these Context7 library IDs:
 
-| Library | Context7 ID |
-| ------- | ----------- |
-| Java SE 25 / JDK 25 (standard library, APIs) | `/websites/oracle_en_java_javase_25` |
-| Gradle 9.4.1 (Kotlin DSL, tasks, dependencies) | `/websites/gradle_9_4_1` |
-| JUnit 6 / Jupiter (tests, assertions, extensions) | `/junit-team/junit-framework` |
+| Library                                           | Context7 ID                          |
+| ------------------------------------------------- | ------------------------------------ |
+| Java SE 25 / JDK 25 (standard library, APIs)      | `/websites/oracle_en_java_javase_25` |
+| Gradle 9.4.1 (Kotlin DSL, tasks, dependencies)    | `/websites/gradle_9_4_1`             |
+| JUnit 6 / Jupiter (tests, assertions, extensions) | `/junit-team/junit-framework`        |

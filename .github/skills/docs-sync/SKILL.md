@@ -16,12 +16,12 @@ argument-hint: 'Optional: scope to a specific doc file (e.g. "README.md only") o
 
 ## Documents to Review
 
-| File | What to Check |
-|------|---------------|
-| `README.md` | Build/run commands, configuration example, project description |
-| `.github/copilot-instructions.md` | Tech stack versions, source layout tree, key conventions, build commands, testing guidelines, Context7 library IDs |
-| `.github/instructions/*.instructions.md` | Any file-scoped instruction files — check applyTo patterns match actual file structure |
-| `.github/skills/*/SKILL.md` | Skill descriptions, example commands, file paths referenced inside the skill body |
+| File                                     | What to Check                                                                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `README.md`                              | Build/run commands, configuration example, project description                                                     |
+| `.github/copilot-instructions.md`        | Tech stack versions, source layout tree, key conventions, build commands, testing guidelines, Context7 library IDs |
+| `.github/instructions/*.instructions.md` | Any file-scoped instruction files — check applyTo patterns match actual file structure                             |
+| `.github/skills/*/SKILL.md`              | Skill descriptions, example commands, file paths referenced inside the skill body                                  |
 
 ## Procedure
 
@@ -89,18 +89,18 @@ When duplicates are found:
 
 Present a table of all inconsistencies *before* making any changes:
 
-| File | Section | Issue | Suggested fix |
-|------|---------|-------|---------------|
+| File                      | Section       | Issue                                        | Suggested fix                             |
+| ------------------------- | ------------- | -------------------------------------------- | ----------------------------------------- |
 | `copilot-instructions.md` | Source Layout | Missing `web/ui/` subpackage and its classes | Add the 8 new component files to the tree |
-| `README.md` | Run | Command `./gradlew run` is correct | ✅ No change needed |
+| `README.md`               | Run           | Command `./gradlew run` is correct           | ✅ No change needed                       |
 
 Ask for confirmation on each group of changes (e.g. "Fix source layout section?" or "Update all at once?").
 
 For duplication findings, include an explicit dedup proposal:
 
-| Files | Duplicated section | Canonical source | Suggested dedup |
-|------|---------------------|------------------|-----------------|
-| `README.md` + `.github/copilot-instructions.md` | `settings.yaml` example | `README.md` | Keep full YAML in README, replace in copilot instructions with "See README" |
+| Files                                           | Duplicated section      | Canonical source | Suggested dedup                                                             |
+| ----------------------------------------------- | ----------------------- | ---------------- | --------------------------------------------------------------------------- |
+| `README.md` + `.github/copilot-instructions.md` | `settings.yaml` example | `README.md`      | Keep full YAML in README, replace in copilot instructions with "See README" |
 
 ### 4. Apply confirmed fixes
 
