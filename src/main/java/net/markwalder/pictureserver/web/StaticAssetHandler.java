@@ -26,7 +26,7 @@ public final class StaticAssetHandler {
         }
         String path = exchange.getRequestURI().getPath();
         String filename = path.startsWith("/assets/") ? path.substring("/assets/".length()) : "";
-        if (filename.isEmpty() || filename.contains("..") || filename.contains("/")) {
+        if (filename.isEmpty() || filename.contains("..")) {
             sendIndex(exchange);
             return;
         }
