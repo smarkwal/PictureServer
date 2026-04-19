@@ -6,3 +6,4 @@ out/
 .DS_Store
 pictures/*
 !pictures/.gitkeep
+TODO.md
