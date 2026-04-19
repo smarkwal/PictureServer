@@ -1,4 +1,4 @@
 path: ./pictures
-port: 8080
+port: 8088
 username: admin
 password: change-me
