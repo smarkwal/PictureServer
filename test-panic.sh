@@ -116,12 +116,11 @@ login() {
   echo "  Logging in as '${USERNAME}' ..."
   local http_code exit_code=0
   http_code=$(curl -s --max-time 5 \
-    -X POST "$BASE_URL/login" \
-    --data-urlencode "username=${USERNAME}" \
-    --data-urlencode "password=${PASSWORD}" \
-    --data-urlencode "next=/" \
+    -X POST "$BASE_URL/api/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"${USERNAME}\",\"password\":\"${PASSWORD}\"}" \
     -c "$cookie_jar" -b "$cookie_jar" \
-    -L -o /dev/null -w "%{http_code}") || exit_code=$?
+    -o /dev/null -w "%{http_code}") || exit_code=$?
   if [[ $exit_code -ne 0 ]]; then
     echo "ERROR: curl failed (exit $exit_code) during login" >&2
     exit 1
@@ -147,15 +146,14 @@ attack_known_attack_probe() {
 attack_failed_login() {
   # Threshold: 5 failures in 60 s per source IP (default-settings.properties).
   local threshold=5
-  printf "  Sending %d POST /login requests with wrong credentials ...\n" "$threshold"
+  printf "  Sending %d POST /api/login requests with wrong credentials ...\n" "$threshold"
   for ((i = 1; i <= threshold; i++)); do
     printf "  Attempt %d/%d ...\n" "$i" "$threshold"
     local exit_code=0
     curl -s --max-time 5 \
-      -X POST "$BASE_URL/login" \
-      --data-urlencode "username=attacker" \
-      --data-urlencode "password=wrongpassword${i}" \
-      --data-urlencode "next=/" \
+      -X POST "$BASE_URL/api/login" \
+      -H "Content-Type: application/json" \
+      -d "{\"username\":\"attacker\",\"password\":\"wrongpassword${i}\"}" \
       -o /dev/null 2>/dev/null || exit_code=$?
     echo "  curl exit code: $exit_code"
   done
@@ -163,14 +161,15 @@ attack_failed_login() {
 
 attack_invalid_session() {
   # Threshold: 5 invalid tokens in 60 s per source IP.
+  # Must target an authenticated API endpoint — GET / serves the SPA shell without auth checks.
   local threshold=5
-  printf "  Sending %d GET requests with a forged PSSESSION cookie ...\n" "$threshold"
+  printf "  Sending %d GET /api/albums/ requests with a forged PSSESSION cookie ...\n" "$threshold"
   for ((i = 1; i <= threshold; i++)); do
     printf "  Request %d/%d ...\n" "$i" "$threshold"
     local exit_code=0
     curl -s --max-time 5 \
       -H "Cookie: PSSESSION=forged-token-${i}-$$" \
-      -o /dev/null "$BASE_URL/" 2>/dev/null || exit_code=$?
+      -o /dev/null "$BASE_URL/api/albums/" 2>/dev/null || exit_code=$?
     echo "  curl exit code: $exit_code"
   done
 }
@@ -179,31 +178,33 @@ attack_path_traversal() {
   local cookie_jar
   cookie_jar=$(mktemp)
   login "$cookie_jar"
-  # --path-as-is prevents curl from normalizing the ../.. sequences before sending.
-  echo "  Sending path traversal request: /photos/../../../etc/passwd"
+  # Dots are percent-encoded (%2e) so the JDK HTTP server does not normalize the path
+  # before it reaches AlbumApiHandler, which then calls PathSafety.resolveSafePath().
+  echo "  Sending path traversal request: /api/albums/%2e%2e/%2e%2e/%2e%2e/etc/passwd"
   local exit_code=0
-  curl -s --max-time 5 --path-as-is \
+  curl -s --max-time 5 \
     -b "$cookie_jar" \
     -o /dev/null \
-    "$BASE_URL/photos/../../../etc/passwd" 2>/dev/null || exit_code=$?
+    "$BASE_URL/api/albums/%2e%2e/%2e%2e/%2e%2e/etc/passwd" 2>/dev/null || exit_code=$?
   echo "  curl exit code: $exit_code"
   rm -f "$cookie_jar"
 }
 
 attack_excessive_404() {
   # Threshold: 10 not-found responses in 60 s per source IP.
+  # Must target /api/albums/* — non-API paths serve index.html (SPA shell) with HTTP 200.
   local threshold=10
   local cookie_jar
   cookie_jar=$(mktemp)
   login "$cookie_jar"
-  printf "  Sending %d GET requests to non-existent paths ...\n" "$threshold"
+  printf "  Sending %d GET /api/albums/ requests to non-existent album paths ...\n" "$threshold"
   for ((i = 1; i <= threshold; i++)); do
     printf "  Request %d/%d ...\n" "$i" "$threshold"
     local exit_code=0
     curl -s --max-time 5 \
       -b "$cookie_jar" \
       -o /dev/null \
-      "$BASE_URL/nonexistent-album-path-${i}" 2>/dev/null || exit_code=$?
+      "$BASE_URL/api/albums/nonexistent-album-path-${i}" 2>/dev/null || exit_code=$?
     echo "  curl exit code: $exit_code"
   done
   rm -f "$cookie_jar"
