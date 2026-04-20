@@ -21,12 +21,23 @@ final class PictureApiHandler {
     private record PictureResponse(String path, String name, String src, List<String> siblings) {
     }
 
+    @FunctionalInterface
+    interface TrashMover {
+        boolean moveToTrash(Path imagePath);
+    }
+
     private final Settings settings;
     private final PanicMonitor panicMonitor;
+    private final TrashMover trashMover;
 
     PictureApiHandler(Settings settings, PanicMonitor panicMonitor) {
+        this(settings, panicMonitor, PictureApiHandler::moveToTrashWithDesktop);
+    }
+
+    PictureApiHandler(Settings settings, PanicMonitor panicMonitor, TrashMover trashMover) {
         this.settings = settings;
         this.panicMonitor = panicMonitor;
+        this.trashMover = trashMover;
     }
 
     void handleGet(HttpExchange exchange, String pathSuffix) throws IOException {
@@ -85,7 +96,7 @@ final class PictureApiHandler {
         }
 
         // Move to trash
-        if (!moveToTrash(pictureFsPath)) {
+        if (!trashMover.moveToTrash(pictureFsPath)) {
             JsonHelper.sendJson(exchange, 500, Map.of("error", "Moving to trash is not supported on this system"));
             return;
         }
@@ -93,7 +104,7 @@ final class PictureApiHandler {
         JsonHelper.sendJson(exchange, 200, Map.of("success", true));
     }
 
-    private boolean moveToTrash(Path imagePath) {
+    private static boolean moveToTrashWithDesktop(Path imagePath) {
         if (!Desktop.isDesktopSupported()) {
             return false;
         }
