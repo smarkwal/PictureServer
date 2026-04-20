@@ -13,6 +13,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SERVER_LOG="$SCRIPT_DIR/test-panic-server.log"
 SERVER_PID=""
 BASE_URL=""
@@ -30,8 +31,8 @@ RESULTS=()
 
 build_server() {
   echo "Building fat JAR ..."
-  (cd "$SCRIPT_DIR" && ./gradlew fatJar -q)
-  JAR=$(ls "$SCRIPT_DIR/build/libs/"*-all.jar 2>/dev/null | head -1)
+  (cd "$PROJECT_ROOT" && ./gradlew fatJar -q)
+  JAR=$(ls "$PROJECT_ROOT/build/libs/"*-all.jar 2>/dev/null | head -1)
   if [[ -z "$JAR" ]]; then
     echo "ERROR: No fat JAR found in build/libs/ after build" >&2
     exit 1
@@ -40,7 +41,7 @@ build_server() {
 }
 
 load_settings() {
-  local file="$SCRIPT_DIR/settings.properties"
+  local file="$PROJECT_ROOT/settings.properties"
   if [[ ! -f "$file" ]]; then
     echo "ERROR: settings.properties not found in $SCRIPT_DIR" >&2
     exit 1
@@ -69,13 +70,13 @@ trap cleanup EXIT
 start_server() {
   : > "$SERVER_LOG"
   # -Duser.dir sets the working directory the server uses to find settings.properties.
-  java -Duser.dir="$SCRIPT_DIR" -jar "$JAR" > "$SERVER_LOG" 2>&1 &
+  java -Duser.dir="$PROJECT_ROOT" -jar "$JAR" > "$SERVER_LOG" 2>&1 &
   SERVER_PID=$!
   echo "  Starting server (PID $SERVER_PID) ..."
   local max_wait=15
   for ((i = 1; i <= max_wait; i++)); do
     sleep 1
-    if grep -q "Picture server listening on" "$SERVER_LOG" 2>/dev/null; then
+    if grep -q "Listening on " "$SERVER_LOG" 2>/dev/null; then
       echo "  Server is ready."
       return 0
     fi
