@@ -1,6 +1,5 @@
 package net.markwalder.pictureserver.web.api;
 
-import com.sun.net.httpserver.HttpExchange;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,6 +7,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import com.sun.net.httpserver.HttpExchange;
+
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
@@ -18,7 +20,7 @@ import net.markwalder.pictureserver.web.service.PictureService;
 
 final class PictureApiHandler {
 
-    private record PictureResponse(String path, String src, List<String> siblings) {
+    private record PictureResponse(String path, String name, String src, List<String> siblings) {
     }
 
     private final Settings settings;
@@ -63,7 +65,8 @@ final class PictureApiHandler {
 
         // Send response
         String src = "/api/images" + encodedPictureWebPath;
-        JsonHelper.sendJson(exchange, 200, new PictureResponse(encodedPictureWebPath, src, siblings));
+        String pictureName = pictureFsPath.getFileName().toString();
+        JsonHelper.sendJson(exchange, 200, new PictureResponse(encodedPictureWebPath, pictureName, src, siblings));
     }
 
     void handleDelete(HttpExchange exchange, String pathSuffix) throws IOException {

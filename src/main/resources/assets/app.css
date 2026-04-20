@@ -100,7 +100,11 @@ a:hover {
 
 .page-album .left-nav,
 .page-picture .left-nav {
-    display: contents;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
 }
 
 .page-album .header-icon,
@@ -131,8 +135,8 @@ a:hover {
 
 .page-album .right-nav,
 .page-picture .right-nav {
-    justify-self: end;
-    min-width: 180px;
+    margin-left: auto;
+    flex: 0 0 auto;
     text-align: right;
 }
 

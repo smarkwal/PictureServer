@@ -1,13 +1,5 @@
 package net.markwalder.pictureserver.web.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
-
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,20 +7,31 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.markwalder.pictureserver.auth.SessionManager;
-import net.markwalder.pictureserver.config.Settings;
-import net.markwalder.pictureserver.config.Settings.PanicSettings;
-import net.markwalder.pictureserver.security.PanicMonitor;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpExchange;
+
+import net.markwalder.pictureserver.auth.SessionManager;
+import net.markwalder.pictureserver.config.Settings;
+import net.markwalder.pictureserver.config.Settings.PanicSettings;
+import net.markwalder.pictureserver.security.PanicMonitor;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -214,6 +217,24 @@ class ApiRouterTest {
 
         // Assert — request passes the auth guard and album handler returns 200
         assertThat(responseStatus.get()).isEqualTo(200);
+    }
+
+    @Test
+    void handle_returnsPictureNameForBreadcrumbWhenAuthenticated() throws IOException {
+        // Arrange
+        Path picturePath = rootDir.resolve("album/holiday photo.jpg");
+        Files.createDirectories(picturePath.getParent());
+        Files.write(picturePath, new byte[] {0});
+        setupRequest("GET", "/api/pictures/album/holiday%20photo.jpg");
+        authenticateSession();
+
+        // Act
+        router.handle(exchange);
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"name\":\"holiday photo.jpg\"");
     }
 
     @Test
