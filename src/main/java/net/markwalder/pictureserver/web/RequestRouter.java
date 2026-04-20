@@ -10,10 +10,12 @@ public final class RequestRouter implements HttpHandler {
 
     private final PanicMonitor panicMonitor;
     private final ApiRouter apiRouter;
+    private final StaticAssetHandler staticAssetHandler;
 
     public RequestRouter(PanicMonitor panicMonitor, ApiRouter apiRouter) {
         this.panicMonitor = panicMonitor;
         this.apiRouter = apiRouter;
+        this.staticAssetHandler = new StaticAssetHandler();
     }
 
     @Override
@@ -30,11 +32,11 @@ public final class RequestRouter implements HttpHandler {
 
             // Route to handler
             if (path.startsWith("/assets/") || "/assets".equals(path)) {
-                StaticAssetHandler.handle(exchange);
+                staticAssetHandler.handle(exchange);
             } else if (path.startsWith("/api/") || "/api".equals(path)) {
                 apiRouter.handle(exchange);
             } else {
-                StaticAssetHandler.sendIndex(exchange);
+                staticAssetHandler.sendIndex(exchange);
             }
         }
     }

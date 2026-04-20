@@ -17,10 +17,10 @@ public final class StaticAssetHandler {
             ".svg", "image/svg+xml"
     );
 
-    private StaticAssetHandler() {
+    public StaticAssetHandler() {
     }
 
-    public static void handle(HttpExchange exchange) throws IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         if (!"GET".equals(exchange.getRequestMethod())) {
             sendError(exchange, 405);
             return;
@@ -38,11 +38,11 @@ public final class StaticAssetHandler {
         serveClasspathResource(exchange, "/assets/" + filename, contentType(filename));
     }
 
-    public static void sendIndex(HttpExchange exchange) throws IOException {
+    public void sendIndex(HttpExchange exchange) throws IOException {
         serveClasspathResource(exchange, "/assets/index.html", "text/html; charset=utf-8");
     }
 
-    private static void serveClasspathResource(HttpExchange exchange, String resource, String contentType) throws IOException {
+    private void serveClasspathResource(HttpExchange exchange, String resource, String contentType) throws IOException {
         // Locate classpath resource
         URL url = StaticAssetHandler.class.getResource(resource);
         if (url == null) {
@@ -78,11 +78,11 @@ public final class StaticAssetHandler {
         }
     }
 
-    private static void sendError(HttpExchange exchange, int status) throws IOException {
+    private void sendError(HttpExchange exchange, int status) throws IOException {
         exchange.sendResponseHeaders(status, -1);
     }
 
-    private static String contentType(String filename) {
+    private String contentType(String filename) {
         for (Map.Entry<String, String> entry : CONTENT_TYPES.entrySet()) {
             if (filename.endsWith(entry.getKey())) {
                 return entry.getValue();
