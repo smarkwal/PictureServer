@@ -1,9 +1,8 @@
 package net.markwalder.pictureserver.web.api;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.util.Map;
-
-import com.sun.net.httpserver.HttpExchange;
 
 final class ShutdownApiHandler {
 

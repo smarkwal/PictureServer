@@ -77,6 +77,24 @@ src/test/java/net/markwalder/pictureserver/
 - **No external frameworks**: Do not introduce Spring, Jakarta EE, Quarkus, or any IoC container.
 - **No database**: This project is intentionally stateless (no JPA, JDBC, H2, etc.).
 
+## Code Style
+
+### Java Import Order
+
+- Static imports first, then one blank line, then all non-static imports.
+- Both groups are sorted alphabetically, case-sensitively (uppercase before lowercase, i.e. `Z` before `a`).
+- No sub-grouping within each block (no blank lines between packages, no separation of `java.*` from third-party).
+
+```java
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.List;
+import net.markwalder.pictureserver.config.Settings;
+import org.junit.jupiter.api.Test;
+```
+
 ## Setup Reference
 
 - For user-facing setup, configuration examples, and run/test commands, use `README.md` as the canonical source.

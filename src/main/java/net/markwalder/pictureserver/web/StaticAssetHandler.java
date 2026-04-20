@@ -1,13 +1,12 @@
 package net.markwalder.pictureserver.web;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
-
-import com.sun.net.httpserver.HttpExchange;
 
 public final class StaticAssetHandler {
 

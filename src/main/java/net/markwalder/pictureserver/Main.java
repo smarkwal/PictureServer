@@ -1,12 +1,10 @@
 package net.markwalder.pictureserver;
 
+import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
-
-import com.sun.net.httpserver.HttpServer;
-
 import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.SettingsLoader;

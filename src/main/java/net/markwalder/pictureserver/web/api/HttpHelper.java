@@ -1,9 +1,8 @@
 package net.markwalder.pictureserver.web.api;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.util.List;
 import java.util.Optional;
-
-import com.sun.net.httpserver.HttpExchange;
 
 final class HttpHelper {
 

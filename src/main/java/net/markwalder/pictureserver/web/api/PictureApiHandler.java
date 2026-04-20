@@ -1,5 +1,6 @@
 package net.markwalder.pictureserver.web.api;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,9 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import com.sun.net.httpserver.HttpExchange;
-
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;

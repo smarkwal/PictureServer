@@ -1,10 +1,8 @@
 package net.markwalder.pictureserver.web;
 
-import java.io.IOException;
-
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-
+import java.io.IOException;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.web.api.ApiRouter;
 

@@ -1,12 +1,11 @@
 package net.markwalder.pictureserver.web;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-
-import com.sun.net.httpserver.HttpExchange;
 
 public final class CacheHelper {
 
