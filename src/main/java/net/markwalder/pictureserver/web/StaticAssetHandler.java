@@ -3,6 +3,8 @@ package net.markwalder.pictureserver.web;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Map;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -38,17 +40,33 @@ public final class StaticAssetHandler {
     }
 
     private static void serveClasspathResource(HttpExchange exchange, String resource, String contentType) throws IOException {
-        try (InputStream in = StaticAssetHandler.class.getResourceAsStream(resource)) {
-            if (in == null) {
-                sendError(exchange, 404);
-                return;
-            }
-            byte[] bytes = in.readAllBytes();
-            exchange.getResponseHeaders().set("Content-Type", contentType);
-            exchange.sendResponseHeaders(200, bytes.length);
-            try (OutputStream out = exchange.getResponseBody()) {
-                out.write(bytes);
-            }
+        URL url = StaticAssetHandler.class.getResource(resource);
+        if (url == null) {
+            sendError(exchange, 404);
+            return;
+        }
+
+        URLConnection conn = url.openConnection();
+        long lastModifiedMillis = conn.getLastModified();
+        byte[] bytes;
+        try (InputStream in = conn.getInputStream()) {
+            bytes = in.readAllBytes();
+        }
+
+        String eTag = CacheHelper.buildETag(bytes.length, lastModifiedMillis);
+        exchange.getResponseHeaders().set("Content-Type", contentType);
+        exchange.getResponseHeaders().set("Cache-Control", "public, no-cache");
+        exchange.getResponseHeaders().set("ETag", eTag);
+        exchange.getResponseHeaders().set("Last-Modified", CacheHelper.formatHttpDate(lastModifiedMillis));
+
+        if (CacheHelper.isNotModified(exchange, eTag, lastModifiedMillis)) {
+            exchange.sendResponseHeaders(304, -1);
+            return;
+        }
+
+        exchange.sendResponseHeaders(200, bytes.length);
+        try (OutputStream out = exchange.getResponseBody()) {
+            out.write(bytes);
         }
     }
 

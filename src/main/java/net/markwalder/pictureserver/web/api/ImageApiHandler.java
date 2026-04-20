@@ -6,10 +6,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,12 +15,11 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
+import net.markwalder.pictureserver.web.CacheHelper;
 import net.markwalder.pictureserver.web.ImageTypes;
 import net.markwalder.pictureserver.web.PathSafety;
 
 final class ImageApiHandler {
-
-    private static final DateTimeFormatter HTTP_DATE_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME;
 
     private final Settings settings;
     private final SessionManager sessionManager;
@@ -65,14 +60,14 @@ final class ImageApiHandler {
 
         long size = Files.size(imageFsPath);
         FileTime lastModified = Files.getLastModifiedTime(imageFsPath);
-        String eTag = buildETag(size, lastModified);
+        String eTag = CacheHelper.buildETag(size, lastModified.toMillis());
 
         exchange.getResponseHeaders().set("Content-Type", ImageTypes.mimeType(imageFsPath.getFileName().toString()));
         exchange.getResponseHeaders().set("Cache-Control", "private, must-revalidate");
         exchange.getResponseHeaders().set("ETag", eTag);
-        exchange.getResponseHeaders().set("Last-Modified", formatHttpDate(lastModified));
+        exchange.getResponseHeaders().set("Last-Modified", CacheHelper.formatHttpDate(lastModified.toMillis()));
 
-        if (isNotModified(exchange, eTag, lastModified)) {
+        if (CacheHelper.isNotModified(exchange, eTag, lastModified.toMillis())) {
             exchange.sendResponseHeaders(304, -1);
             return;
         }
@@ -84,52 +79,4 @@ final class ImageApiHandler {
         }
     }
 
-    private static String buildETag(long size, FileTime lastModified) {
-        return "\"" + Long.toHexString(size) + '-' + Long.toHexString(lastModified.toMillis()) + "\"";
-    }
-
-    private static String formatHttpDate(FileTime lastModified) {
-        return HTTP_DATE_FORMATTER.format(ZonedDateTime.ofInstant(lastModified.toInstant(), ZoneOffset.UTC));
-    }
-
-    private static boolean isNotModified(HttpExchange exchange, String eTag, FileTime lastModified) {
-        String ifNoneMatch = exchange.getRequestHeaders().getFirst("If-None-Match");
-        if (ifNoneMatch != null) {
-            return eTagMatches(ifNoneMatch, eTag);
-        }
-
-        String ifModifiedSince = exchange.getRequestHeaders().getFirst("If-Modified-Since");
-        if (ifModifiedSince == null) {
-            return false;
-        }
-
-        try {
-            long requestTimeMillis = ZonedDateTime.parse(ifModifiedSince, HTTP_DATE_FORMATTER)
-                    .toInstant()
-                    .toEpochMilli();
-            long fileTimeMillis = (lastModified.toMillis() / 1000L) * 1000L;
-            return fileTimeMillis <= requestTimeMillis;
-        } catch (DateTimeParseException ex) {
-            return false;
-        }
-    }
-
-    private static boolean eTagMatches(String ifNoneMatch, String currentETag) {
-        String normalizedCurrentETag = normalizeETag(currentETag);
-        for (String candidate : ifNoneMatch.split(",")) {
-            String normalizedCandidate = normalizeETag(candidate.trim());
-            if ("*".equals(normalizedCandidate) || normalizedCurrentETag.equals(normalizedCandidate)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static String normalizeETag(String eTag) {
-        String normalized = eTag.trim();
-        if (normalized.startsWith("W/")) {
-            return normalized.substring(2).trim();
-        }
-        return normalized;
-    }
 }
