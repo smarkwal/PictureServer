@@ -63,8 +63,8 @@ final class AuthApiHandler {
 
         // Create session and set cookie
         String sessionId = sessionManager.createSession(request.username(), sourceIp, userAgent);
-        exchange.getResponseHeaders().add("Set-Cookie",
-                sessionManager.cookieName() + "=" + sessionId + "; Path=/; HttpOnly; SameSite=Strict");
+        String loginCookie = sessionManager.cookieName() + "=" + sessionId + "; Path=/; HttpOnly; SameSite=Strict";
+        exchange.getResponseHeaders().add("Set-Cookie", loginCookie);
         JsonHelper.sendJson(exchange, 200, Map.of("success", true));
     }
 
@@ -79,8 +79,8 @@ final class AuthApiHandler {
         sessionId.ifPresent(sessionManager::removeSession);
 
         // Clear cookie and respond
-        exchange.getResponseHeaders().add("Set-Cookie",
-                sessionManager.cookieName() + "=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0");
+        String logoutCookie = sessionManager.cookieName() + "=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0";
+        exchange.getResponseHeaders().add("Set-Cookie", logoutCookie);
         JsonHelper.sendJson(exchange, 200, Map.of());
     }
 }

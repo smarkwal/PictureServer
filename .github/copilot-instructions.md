@@ -99,6 +99,10 @@ import org.junit.jupiter.api.Test;
 
 After modifying any source file, run `./gradlew spotlessApply` to enforce consistent formatting (import order, trailing whitespace, final newline). The `spotlessCheck` task — wired into `check` — will fail the build if files are out of compliance.
 
+### Line Length
+
+Avoid line-continuation breaks. When a statement is too long to fit on one line, extract intermediate values into named local variables rather than breaking the statement across lines. Exception: fluent APIs (streams, builders) may span multiple lines — one method call per line, aligned to the opening expression.
+
 ### Inline Comments
 
 Any production method body that contains two or more distinct logical phases must have a section label comment before each phase. A **phase** is a group of statements that share a single purpose; when one purpose ends and another begins, a comment is required. Line count is irrelevant — a 6-line method with three phases needs three labels; a 15-line method that does one thing needs none.

@@ -20,8 +20,9 @@ final class SessionApiHandler {
             return;
         }
         Optional<String> cookie = HttpHelper.readCookie(exchange, sessionManager.cookieName());
-        boolean authenticated = cookie.isPresent() && sessionManager.isAuthenticated(
-                cookie.get(), HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
+        String sourceIp = HttpHelper.getSourceIp(exchange);
+        String userAgent = HttpHelper.getUserAgent(exchange);
+        boolean authenticated = cookie.isPresent() && sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent);
         JsonHelper.sendJson(exchange, 200, Map.of("authenticated", authenticated));
     }
 }
