@@ -16,60 +16,9 @@ A Java application that hosts an embedded HTTP server for browsing pictures stor
 
 ## Source Layout
 
-```text
-src/main/java/net/markwalder/pictureserver/
-  Logger.java                          # Logging utility
-  Main.java                            # Entry point, HttpServer bootstrap
-  auth/
-    SessionManager.java                # Server-side session map, cookie name PSSESSION
-  config/
-    Settings.java                      # Record: rootDirectory, port, username, password, panic
-    SettingsLoader.java                # Reads settings.properties from CWD
-  security/
-    PanicMonitor.java                  # Threat detection and panic mode
-    ThreatEvent.java                   # Threat event types enum
-  web/
-    CacheHelper.java                   # ETag / Last-Modified cache validation helpers
-    ImageTypes.java                    # Image MIME type mapping and extension checks
-    PathSafety.java                    # resolveSafePath() for traversal-safe filesystem access
-    RequestRouter.java                 # Top-level HttpHandler; calls panicMonitor.checkPath(), routes by prefix
-    StaticAssetHandler.java            # Serves classpath /assets/ files (index.html, app.css, JS, icon.svg)
-    WebPaths.java                      # normalizeWebPath(), parentWebPath(), encodeWebPath()
-    api/
-      ApiRouter.java                   # Routes /api/*; auth guard for protected endpoints
-      AlbumApiHandler.java             # GET /api/albums/{path} → JSON album listing
-      AuthApiHandler.java              # POST /api/login, POST /api/logout
-      HttpHelper.java                  # Source IP, user-agent, and cookie helpers
-      ImageApiHandler.java             # GET /api/images/{path} → binary image stream
-      JsonHelper.java                  # Shared strict ObjectMapper, sendJson(), readJson(), readCookie()
-      PictureApiHandler.java           # GET /api/pictures/{path}, DELETE /api/pictures/{path}
-      SessionApiHandler.java           # GET /api/session → { authenticated: bool }
-      ShutdownApiHandler.java          # POST /api/shutdown
-    service/
-      AlbumService.java                # listAlbum(): albums, albumPreviews, pictures
-      PictureService.java              # getPictureInfo(): sibling list
-src/main/resources/assets/
-  index.html                           # SPA shell — served for / and all non-API, non-asset paths
-  app.css                              # Stylesheet
-  icon.svg                             # Favicon
-  app.js                               # Entry point; imports all views/components, calls router.init()
-  router.js                            # History API client router (navigate, popstate, session check)
-  api.js                               # fetch() wrappers returning JSON; throws ApiError on non-2xx
-  views/
-    login.js                           # Login form view
-    album.js                           # Album grid view (tiles, breadcrumb, menu)
-    picture.js                         # Picture detail view (sidebar, delete, prev/next)
-  components/
-    breadcrumb.js                      # Clickable breadcrumb from a path string
-    menu.js                            # Hamburger <details> menu
-src/test/java/net/markwalder/pictureserver/
-  auth/                                # Session/authentication tests
-  config/                              # Settings loading/validation tests
-  security/                            # Panic detection and shutdown trigger tests
-  web/                                 # Shared web utility tests
-    api/                               # API routing and handler tests
-    service/                           # Album/picture service tests
-```
+Source layout and endpoint details are documented in `ARCHITECTURE.md`.
+
+Keep this file stable and avoid file-by-file listings here so routine class additions/removals do not require updates.
 
 ## Key Conventions
 
