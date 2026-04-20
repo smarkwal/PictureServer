@@ -1,16 +1,19 @@
 import * as loginView from './views/login.js';
 import * as albumView from './views/album.js';
 import * as pictureView from './views/picture.js';
+import { createPageTemplate } from './components/page-template.js';
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
 let appEl;
+let pageTemplate;
 let pendingPath = null;
 let viewController = new AbortController();
 let currentView = 'unknown';
 
 export function init(el) {
     appEl = el;
+    pageTemplate = createPageTemplate(appEl);
     window.addEventListener('popstate', () => renderView(window.location.pathname));
     start();
 }
@@ -32,7 +35,7 @@ async function start() {
 
 function showLogin() {
     currentView = 'login';
-    loginView.render(appEl, () => {
+    loginView.render(pageTemplate, () => {
         const target = pendingPath && pendingPath !== '/' ? pendingPath : '/';
         pendingPath = null;
         navigate(target);
@@ -57,13 +60,13 @@ function renderView(path) {
     const signal = viewController.signal;
     if (!path || path === '/') {
         currentView = 'album';
-        albumView.render(appEl, '/', navigate, showLogin, signal);
+        albumView.render(pageTemplate, '/', navigate, showLogin, signal);
     } else if (isImagePath(path)) {
         currentView = 'picture';
-        pictureView.render(appEl, path, navigate, showLogin, signal);
+        pictureView.render(pageTemplate, path, navigate, showLogin, signal);
     } else {
         currentView = 'album';
-        albumView.render(appEl, path, navigate, showLogin, signal);
+        albumView.render(pageTemplate, path, navigate, showLogin, signal);
     }
 }
 

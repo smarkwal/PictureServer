@@ -6,6 +6,7 @@ import './views/album.js';
 import './views/picture.js';
 import './components/breadcrumb.js';
 import './components/menu.js';
+import './components/page-template.js';
 import './api.js';
 
 const appEl = document.getElementById('app');

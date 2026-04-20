@@ -22,74 +22,28 @@ a:hover {
     text-decoration: none;
 }
 
-.page-login {
-    background: linear-gradient(120deg, #f7efe3, #dce7ef);
+html,
+body,
+#app {
     margin: 0;
-    min-height: 100vh;
+    height: 100%;
+}
+
+.app-shell {
+    height: 100svh;
+    min-height: 100svh;
     display: grid;
-    place-items: center;
+    grid-template-rows: auto minmax(0, 1fr);
 }
 
-.page-login .card {
-    background: #fff;
-    width: min(420px, 92vw);
-    border-radius: 14px;
-    box-shadow: 0 14px 35px rgba(31, 40, 51, .18);
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+@supports (height: 100dvh) {
+    .app-shell {
+        height: 100dvh;
+        min-height: 100dvh;
+    }
 }
 
-.page-login .app-icon {
-    width: 96px;
-    height: 96px;
-    margin-bottom: 12px;
-    border-radius: 22px;
-    box-shadow: 0 6px 18px rgba(31, 40, 51, .22);
-}
-
-.page-login form {
-    width: 100%;
-    text-align: left;
-}
-
-.page-login h1 {
-    margin-top: 0;
-}
-
-.page-login input {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0 14px;
-    border: 1px solid #c8ccd0;
-    border-radius: 8px;
-}
-
-.page-login button {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    background: #1f6357;
-    color: #fff;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.page-login .error {
-    color: #b03030;
-}
-
-.page-album {
-    margin: 0;
-    color: var(--ink);
-    background: radial-gradient(circle at top left, #f4f7e8, #f2e7dc);
-}
-
-.page-album header,
-.page-picture header {
+.title-bar {
     padding: 12px 18px;
     background: #fff;
     display: flex;
@@ -98,8 +52,7 @@ a:hover {
     border-bottom: 1px solid #ddd;
 }
 
-.page-album .left-nav,
-.page-picture .left-nav {
+.title-left {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -107,8 +60,7 @@ a:hover {
     min-width: 0;
 }
 
-.page-album .header-icon,
-.page-picture .header-icon {
+.title-icon {
     display: block;
     width: 36px;
     height: 36px;
@@ -116,8 +68,7 @@ a:hover {
     box-shadow: 0 2px 6px rgba(31, 40, 51, .18);
 }
 
-.page-album .crumbs,
-.page-picture .crumbs {
+.title-navigation {
     margin: 0;
     color: #4b5563;
     text-align: left;
@@ -127,27 +78,28 @@ a:hover {
     flex: 1;
 }
 
-.page-album .crumbs .current,
-.page-picture .crumbs .current {
+.title-label {
     font-weight: 700;
     color: #1f2937;
 }
 
-.page-album .right-nav,
-.page-picture .right-nav {
+.title-menu {
     margin-left: auto;
     flex: 0 0 auto;
     text-align: right;
 }
 
-.page-album .user-menu,
-.page-picture .user-menu {
+.title-navigation .crumbs .current {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.title-menu .user-menu {
     position: relative;
     display: inline-block;
 }
 
-.page-album .menu-button,
-.page-picture .menu-button {
+.title-menu .menu-button {
     list-style: none;
     display: inline-flex;
     align-items: center;
@@ -162,19 +114,16 @@ a:hover {
     user-select: none;
 }
 
-.page-album .menu-button::-webkit-details-marker,
-.page-picture .menu-button::-webkit-details-marker {
+.title-menu .menu-button::-webkit-details-marker {
     display: none;
 }
 
-.page-album .user-menu[open] .menu-button,
-.page-picture .user-menu[open] .menu-button {
+.title-menu .user-menu[open] .menu-button {
     background: #f3f4f6;
     border-color: #9ca3af;
 }
 
-.page-album .menu-panel,
-.page-picture .menu-panel {
+.title-menu .menu-panel {
     position: absolute;
     right: 0;
     top: calc(100% + 8px);
@@ -188,8 +137,7 @@ a:hover {
     z-index: 10;
 }
 
-.page-album .menu-item,
-.page-picture .menu-item {
+.title-menu .menu-item {
     display: block;
     width: 100%;
     padding: 8px 10px;
@@ -201,14 +149,72 @@ a:hover {
     cursor: pointer;
 }
 
-.page-album .menu-item:hover,
-.page-picture .menu-item:hover {
+.title-menu .menu-item:hover {
     background: #f3f4f6;
 }
 
-.page-album .menu-item.danger,
-.page-picture .menu-item.danger {
+.title-menu .menu-item.danger {
     color: #b91c1c;
+}
+
+.page-center {
+    min-height: 0;
+}
+
+.page-loading {
+    padding: 20px;
+}
+
+.page-login-center {
+    background: linear-gradient(120deg, #f7efe3, #dce7ef);
+    min-height: 0;
+    display: grid;
+    place-items: center;
+}
+
+.page-login-content .card {
+    background: #fff;
+    width: min(420px, 92vw);
+    border-radius: 14px;
+    box-shadow: 0 14px 35px rgba(31, 40, 51, .18);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.page-login-content form {
+    width: 100%;
+    text-align: left;
+}
+
+.page-login-content input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0 14px;
+    border: 1px solid #c8ccd0;
+    border-radius: 8px;
+}
+
+.page-login-content button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #1f6357;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.page-login-content .error {
+    color: #b03030;
+}
+
+.page-album-center {
+    color: var(--ink);
+    background: radial-gradient(circle at top left, #f4f7e8, #f2e7dc);
 }
 
 .confirm-dialog {
@@ -237,14 +243,14 @@ a:hover {
     cursor: pointer;
 }
 
-.page-album .grid {
+.page-album-content .grid {
     padding: 20px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 14px;
 }
 
-.page-album .tile {
+.page-album-content .tile {
     background: #ffffffde;
     border: 1px solid #d8d8d8;
     border-radius: 12px;
@@ -261,18 +267,18 @@ a:hover {
     cursor: pointer;
 }
 
-.page-album .tile:hover {
+.page-album-content .tile:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 22px rgba(0, 0, 0, .12);
     text-decoration: none;
 }
 
-.page-album .tile.picture {
+.page-album-content .tile.picture {
     min-height: 140px;
     padding: 10px;
 }
 
-.page-album .picture-thumb-box {
+.page-album-content .picture-thumb-box {
     width: 100%;
     max-width: 190px;
     height: 130px;
@@ -284,7 +290,7 @@ a:hover {
     overflow: hidden;
 }
 
-.page-album .picture-thumb {
+.page-album-content .picture-thumb {
     max-width: 100%;
     max-height: 100%;
     width: auto;
@@ -293,7 +299,7 @@ a:hover {
     display: block;
 }
 
-.page-album .album-thumb-box {
+.page-album-content .album-thumb-box {
     width: 100%;
     max-width: 190px;
     height: 65px;
@@ -305,42 +311,41 @@ a:hover {
     overflow: hidden;
 }
 
-.page-album .album-thumb {
+.page-album-content .album-thumb {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
 
-.page-album .icon {
+.page-album-content .icon {
     font-size: 1.6rem;
 }
 
-.page-album .empty {
+.page-album-content .empty {
     padding: 28px;
     text-align: center;
     color: #555;
 }
 
-.page-picture {
-    margin: 0;
+.page-picture-center {
     background: #f2f2f2;
-    height: 100svh;
-    min-height: 100svh;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    display: flex;
+    min-height: 0;
     overflow: hidden;
 }
 
-@supports (height: 100dvh) {
-    .page-picture {
-        height: 100dvh;
-        min-height: 100dvh;
-    }
+.page-picture-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .picture-layout {
     display: flex;
+    flex: 1;
     min-height: 0;
     overflow: hidden;
 }
@@ -391,7 +396,7 @@ a:hover {
     border-color: #000000;
 }
 
-.page-picture main {
+.page-picture-content main {
     flex: 1;
     padding: 16px;
     min-width: 0;
@@ -399,7 +404,7 @@ a:hover {
     overflow: hidden;
 }
 
-.page-picture .picture-stage {
+.page-picture-content .picture-stage {
     width: 100%;
     height: 100%;
     display: flex;
@@ -408,7 +413,7 @@ a:hover {
     overflow: hidden;
 }
 
-.page-picture .picture-stage img {
+.page-picture-content .picture-stage img {
     display: block;
     max-width: 100%;
     max-height: 100%;

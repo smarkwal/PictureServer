@@ -1,15 +1,20 @@
 import * as api from '../api.js';
 import { renderBreadcrumb } from '../components/breadcrumb.js';
 import { renderMenu } from '../components/menu.js';
+import { renderTitleBar } from '../components/page-template.js';
 
-export async function render(appEl, path, navigate, showLogin, signal) {
-    appEl.innerHTML = '<div class="page-album"><p style="padding:20px">Loading…</p></div>';
+export async function render(template, path, navigate, showLogin, signal) {
+    template.setTitleBar(renderTitleBar({
+        navigationHtml: renderBreadcrumb(path),
+    }));
+    template.setCenter('<p class="page-loading">Loading...</p>', 'page-album-center');
+
     let data;
     try {
         data = await api.getAlbum(path === '/' ? '' : path);
     } catch (err) {
         if (err.status === 401) { showLogin(); return; }
-        appEl.innerHTML = `<div class="page-error"><h1>Error</h1><p>${escapeHtml(err.message)}</p></div>`;
+        template.setCenter(`<div class="page-error"><h1>Error</h1><p>${escapeHtml(err.message)}</p></div>`, 'page-album-center');
         return;
     }
 
@@ -40,26 +45,25 @@ export async function render(appEl, path, navigate, showLogin, signal) {
 
     const gridContent = (albumTiles + pictureTiles) || '<p class="empty">This album is empty.</p>';
 
-    appEl.innerHTML = `
-        <div class="page-album">
-          <header>
-            <div class="left-nav">
-              <img class="header-icon" src="/assets/icon.svg" alt="Picture Server">
-              ${renderBreadcrumb(path)}
-            </div>
-            <div class="right-nav">${renderMenu(menuItems)}</div>
-          </header>
-          <section class="grid" id="album-grid">${gridContent}</section>
-          <dialog id="shutdown-dialog" class="confirm-dialog">
-            <p>Are you sure you want to shut down the server?</p>
-            <div class="confirm-actions">
-              <button id="shutdown-cancel">Cancel</button>
-              <button id="shutdown-confirm" class="danger">Shut down</button>
-            </div>
-          </dialog>
-        </div>`;
+        template.setTitleBar(renderTitleBar({
+                navigationHtml: renderBreadcrumb(path),
+                menuHtml: renderMenu(menuItems),
+        }));
 
-    appEl.addEventListener('click', async e => {
+        template.setCenter(`
+                <div class="page-album-content">
+                    <section class="grid" id="album-grid">${gridContent}</section>
+                    <dialog id="shutdown-dialog" class="confirm-dialog">
+                        <p>Are you sure you want to shut down the server?</p>
+                        <div class="confirm-actions">
+                            <button id="shutdown-cancel">Cancel</button>
+                            <button id="shutdown-confirm" class="danger">Shut down</button>
+                        </div>
+                    </dialog>
+                </div>
+        `, 'page-album-center');
+
+        template.rootEl.addEventListener('click', async e => {
         const tile = e.target.closest('.tile[data-path]');
         if (tile) {
             navigate(tile.dataset.path);
@@ -73,22 +77,22 @@ export async function render(appEl, path, navigate, showLogin, signal) {
         }
         const btn = e.target.closest('button[data-action]');
         if (btn) {
-            const details = appEl.querySelector('details.user-menu');
+            const details = template.titleBarEl.querySelector('details.user-menu');
             if (details) details.removeAttribute('open');
             if (btn.dataset.action === 'logout') {
                 await api.logout().catch(() => {});
                 navigate('/');
             } else if (btn.dataset.action === 'shutdown') {
-                appEl.querySelector('#shutdown-dialog')?.showModal();
+                template.centerEl.querySelector('#shutdown-dialog')?.showModal();
             }
         }
         if (e.target.id === 'shutdown-cancel') {
-            appEl.querySelector('#shutdown-dialog')?.close();
+            template.centerEl.querySelector('#shutdown-dialog')?.close();
         }
         if (e.target.id === 'shutdown-confirm') {
-            appEl.querySelector('#shutdown-dialog')?.close();
+            template.centerEl.querySelector('#shutdown-dialog')?.close();
             await api.shutdown().catch(() => {});
-            appEl.innerHTML = '<div class="page-shutdown"><p>The server is shutting down…</p></div>';
+            template.setCenter('<div class="page-shutdown"><p>The server is shutting down...</p></div>', 'page-album-center');
         }
     }, { signal });
 }

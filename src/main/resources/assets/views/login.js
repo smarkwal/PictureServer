@@ -1,11 +1,14 @@
 import * as api from '../api.js';
+import { renderTitleBar } from '../components/page-template.js';
 
-export function render(appEl, onSuccess) {
-    appEl.innerHTML = `
-        <div class="page-login">
+export function render(template, onSuccess) {
+    template.setTitleBar(renderTitleBar({
+        navigationHtml: '<span class="title-label">Picture Server</span>',
+    }));
+
+    template.setCenter(`
+        <div class="page-login-content">
           <div class="card">
-            <img class="app-icon" src="/assets/icon.svg" alt="Picture Server">
-            <h1>Picture Server</h1>
             <form id="login-form">
               <div id="login-error" class="error" style="display:none"></div>
               <label for="username">Username</label>
@@ -15,11 +18,12 @@ export function render(appEl, onSuccess) {
               <button type="submit" id="login-btn">Sign in</button>
             </form>
           </div>
-        </div>`;
+        </div>
+    `, 'page-login-center');
 
-    const form = appEl.querySelector('#login-form');
-    const errorEl = appEl.querySelector('#login-error');
-    const btn = appEl.querySelector('#login-btn');
+    const form = template.centerEl.querySelector('#login-form');
+    const errorEl = template.centerEl.querySelector('#login-error');
+    const btn = template.centerEl.querySelector('#login-btn');
 
     form.addEventListener('submit', async e => {
         e.preventDefault();
