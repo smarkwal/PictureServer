@@ -1,0 +1,16 @@
+root = true
+
+# Formatting rules for editors. The build-time equivalent is the spotless block
+# in build.gradle.kts — keep the two in sync when changing rules here.
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{html,svg,xml}]
+indent_size = 2
+

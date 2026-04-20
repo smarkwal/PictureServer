@@ -1,5 +1,6 @@
 plugins {
     application
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 java {
@@ -40,6 +41,46 @@ tasks.build {
     dependsOn("fatJar")
 }
 
+// Build-time enforcement of formatting rules. The editor-side equivalent is
+// .editorconfig — keep the two in sync when changing rules here.
+spotless {
+    java {
+        importOrder("\\#", "")
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format("kotlinDsl") {
+        target("*.kts")
+        trimTrailingWhitespace()
+        endWithNewline()
+        indentWithSpaces(4)
+    }
+    format("javascript") {
+        target("src/**/*.js")
+        trimTrailingWhitespace()
+        endWithNewline()
+        indentWithSpaces(4)
+    }
+    format("css") {
+        target("src/**/*.css")
+        trimTrailingWhitespace()
+        endWithNewline()
+        indentWithSpaces(4)
+    }
+    format("htmlSvg") {
+        target("src/**/*.html", "src/**/*.svg")
+        trimTrailingWhitespace()
+        endWithNewline()
+        indentWithSpaces(2)
+    }
+    format("markdown") {
+        target("**/*.md")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
 tasks.register<Jar>("fatJar") {
     group = "build"
     description = "Assembles a self-contained executable JAR with all runtime dependencies."
@@ -53,4 +94,3 @@ tasks.register<Jar>("fatJar") {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
-

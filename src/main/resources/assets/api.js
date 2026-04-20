@@ -52,4 +52,3 @@ export async function shutdown() {
 function encodeURIPath(path) {
     return path.split('/').map(seg => seg ? encodeURIComponent(seg) : '').join('/');
 }
-

@@ -95,6 +95,10 @@ import net.markwalder.pictureserver.config.Settings;
 import org.junit.jupiter.api.Test;
 ```
 
+### Formatting
+
+After modifying any source file, run `./gradlew spotlessApply` to enforce consistent formatting (import order, trailing whitespace, final newline). The `spotlessCheck` task — wired into `check` — will fail the build if files are out of compliance.
+
 ## Setup Reference
 
 - For user-facing setup, configuration examples, and run/test commands, use `README.md` as the canonical source.
