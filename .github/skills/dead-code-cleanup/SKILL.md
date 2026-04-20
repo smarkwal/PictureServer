@@ -89,11 +89,11 @@ grep -r "symbolName" src/main/resources/assets/
 
 Present a table of candidates grouped by type before making any changes:
 
-| Type             | Location                        | Symbol             | Reason                                 |
-| ---------------- | ------------------------------- | ------------------ | -------------------------------------- |
-| Unused import    | `AlbumApiHandler.java:12`       | `java.util.Set`    | Never used in file body                |
-| Unused CSS rule  | `app.css:239`                   | `.nav-spacer`      | No JS or HTML uses this class          |
-| Unused JS export | `api.js:42`                     | `export function`  | Not imported by any other module       |
+| Type             | Location                  | Symbol            | Reason                           |
+| ---------------- | ------------------------- | ----------------- | -------------------------------- |
+| Unused import    | `AlbumApiHandler.java:12` | `java.util.Set`   | Never used in file body          |
+| Unused CSS rule  | `app.css:239`             | `.nav-spacer`     | No JS or HTML uses this class    |
+| Unused JS export | `api.js:42`               | `export function` | Not imported by any other module |
 
 Ask the user to confirm before proceeding with removals.
 

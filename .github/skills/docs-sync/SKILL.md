@@ -23,6 +23,29 @@ argument-hint: 'Optional: scope to a specific doc file (e.g. "README.md only") o
 | `.github/instructions/*.instructions.md` | Any file-scoped instruction files — check applyTo patterns match actual file structure                             |
 | `.github/skills/*/SKILL.md`              | Skill descriptions, example commands, file paths referenced inside the skill body                                  |
 
+## Markdown Table Formatter
+
+Use the bundled Java Single-File Source-Code application to find and format Markdown tables so they match the
+repository markdown style rule (spaces around `|` and aligned column separators).
+
+Check mode (reports files and exits non-zero when formatting is needed):
+
+```bash
+java .github/skills/docs-sync/scripts/FormatMarkdownTables.java .
+```
+
+Write mode (applies formatting in place):
+
+```bash
+java .github/skills/docs-sync/scripts/FormatMarkdownTables.java --write .
+```
+
+Recommended workflow for agents:
+
+1. Run check mode first.
+2. If tables need formatting, run write mode.
+3. Re-run check mode to confirm no remaining table-format drift.
+
 ## Procedure
 
 ### 1. Collect ground truth from the codebase
@@ -92,14 +115,14 @@ Present a table of all inconsistencies *before* making any changes:
 | File                      | Section       | Issue                                        | Suggested fix                             |
 | ------------------------- | ------------- | -------------------------------------------- | ----------------------------------------- |
 | `copilot-instructions.md` | Source Layout | Missing `web/ui/` subpackage and its classes | Add the 8 new component files to the tree |
-| `README.md`               | Run           | Command `./gradlew run` is correct           | ✅ No change needed                       |
+| `README.md`               | Run           | Command `./gradlew run` is correct           | ✅ No change needed                        |
 
 Ask for confirmation on each group of changes (e.g. "Fix source layout section?" or "Update all at once?").
 
 For duplication findings, include an explicit dedup proposal:
 
-| Files                                           | Duplicated section      | Canonical source | Suggested dedup                                                             |
-| ----------------------------------------------- | ----------------------- | ---------------- | --------------------------------------------------------------------------- |
+| Files                                           | Duplicated section            | Canonical source | Suggested dedup                                                                   |
+| ----------------------------------------------- | ----------------------------- | ---------------- | --------------------------------------------------------------------------------- |
 | `README.md` + `.github/copilot-instructions.md` | `settings.properties` example | `README.md`      | Keep full properties in README, replace in copilot instructions with "See README" |
 
 ### 4. Apply confirmed fixes
