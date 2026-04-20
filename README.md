@@ -8,7 +8,7 @@
 - **Picture viewer** — full-size image display with a thumbnail strip for quick navigation within an album
 - **Password protection** — single-user login with a server-side session cookie; no credentials are stored in the browser
 - **Zero dependencies at runtime** — embedded JDK HTTP server, no external process required
-- **Broad image support** — serves JPEG, PNG, GIF, WebP, AVIF, and more
+- **Broad image support** — serves JPEG, PNG, GIF, WebP, and BMP
 
 ## Screenshots
 
