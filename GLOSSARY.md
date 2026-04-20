@@ -104,4 +104,3 @@ communication with AI agents.
 | **PictureResponse** | `path`, `name`, `src` (image URL), `siblings` (list of paths)              |
 | **SessionResponse** | `authenticated` (boolean)                                                  |
 | **LoginRequest**    | `username`, `password`                                                     |
-
