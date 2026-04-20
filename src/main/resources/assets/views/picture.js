@@ -63,6 +63,12 @@ export async function render(template, path, navigate, showLogin, signal) {
             return;
         }
 
+        const picture = e.target.closest('img[data-next-picture]');
+        if (picture) {
+            navigateToNextPicture();
+            return;
+        }
+
         const link = e.target.closest('a[data-path]');
         if (link) {
             e.preventDefault();
@@ -165,12 +171,12 @@ function renderPictureLayout(template, path, data, menuItems) {
     template.setCenter(`
         <div class="page-picture-content">
           <div class="picture-layout">
-            <div class="picture-sidebar" id="sidebar">${renderSidebar(data.siblings, path)}</div>
-            <main>
-              <div class="picture-stage">
-                <img src="${escapeAttr(data.src)}" alt="${escapeHtml(data.name)}">
-              </div>
-            </main>
+                        <div class="picture-sidebar" id="sidebar">${renderSidebar(data.siblings, path)}</div>
+                        <main>
+                            <div class="picture-stage">
+                                <img src="${escapeAttr(data.src)}" alt="${escapeHtml(data.name)}" data-next-picture>
+                            </div>
+                        </main>
           </div>
           <dialog id="delete-dialog" class="confirm-dialog">
             <p>Move this picture to the trash?</p>
@@ -193,6 +199,21 @@ function renderSidebar(siblings, currentPath) {
             <img class="${imgClass}" src="${escapeAttr(imgSrc)}" alt="" loading="lazy">
           </span>`;
     }).join('');
+}
+
+function navigateToNextPicture() {
+    if (!viewState || !Array.isArray(viewState.siblings) || viewState.siblings.length === 0) {
+        return;
+    }
+
+    const currentIndex = viewState.siblings.indexOf(viewState.path);
+    const nextPath = currentIndex === -1
+        ? viewState.siblings[0]
+        : viewState.siblings[(currentIndex + 1) % viewState.siblings.length];
+
+    if (nextPath && nextPath !== viewState.path) {
+        viewState.navigate(nextPath);
+    }
 }
 
 function encodeURIPath(path) {
