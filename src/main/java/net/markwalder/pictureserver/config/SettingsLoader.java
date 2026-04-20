@@ -16,6 +16,7 @@ public final class SettingsLoader {
             throw new IllegalStateException("settings.properties not found in current working directory: " + settingsFile);
         }
 
+        // Load default properties
         Properties defaults = new Properties();
         try (InputStream input = SettingsLoader.class.getResourceAsStream("/default-settings.properties")) {
             if (input != null) {
@@ -23,16 +24,19 @@ public final class SettingsLoader {
             }
         }
 
+        // Load user properties
         Properties props = new Properties(defaults);
         try (InputStream input = Files.newInputStream(settingsFile)) {
             props.load(input);
         }
 
+        // Parse connection settings
         String pathValue = asNonBlankString(props.getProperty("path"), "path");
         String username = asNonBlankString(props.getProperty("username"), "username");
         String password = asNonBlankString(props.getProperty("password"), "password");
         int port = asPort(props.getProperty("port"));
 
+        // Resolve root directory
         Path root = Path.of(pathValue);
         if (!root.isAbsolute()) {
             root = cwd.resolve(root);
@@ -43,6 +47,7 @@ public final class SettingsLoader {
             throw new IllegalStateException("Configured path is not an existing directory: " + root);
         }
 
+        // Build panic settings
         Settings.PanicSettings panic = new Settings.PanicSettings(
                 asBoolean(props.getProperty("panic.enabled")),
                 asBoolean(props.getProperty("panic.pathTraversal.enabled")),
@@ -75,6 +80,8 @@ public final class SettingsLoader {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalStateException("Missing or invalid 'port' in settings.properties");
         }
+
+        // Parse port number
         int port;
         try {
             port = Integer.parseInt(value.trim());
@@ -82,6 +89,7 @@ public final class SettingsLoader {
             throw new IllegalStateException("Invalid 'port' in settings.properties", ex);
         }
 
+        // Validate port range
         if (port < 1 || port > 65535) {
             throw new IllegalStateException("Port must be between 1 and 65535");
         }
@@ -92,12 +100,16 @@ public final class SettingsLoader {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalStateException("Missing or invalid '" + key + "' in settings.properties");
         }
+
+        // Parse integer value
         int result;
         try {
             result = Integer.parseInt(value.trim());
         } catch (NumberFormatException ex) {
             throw new IllegalStateException("Invalid '" + key + "' in settings.properties", ex);
         }
+
+        // Validate positive constraint
         if (result < 1) {
             throw new IllegalStateException("Value of '" + key + "' must be at least 1");
         }

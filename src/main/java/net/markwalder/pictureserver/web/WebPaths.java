@@ -12,10 +12,13 @@ public final class WebPaths {
     }
 
     public static String normalizeWebPath(String path) {
+        // Decode and handle trivial cases
         String decoded = decode(path);
         if (decoded.isBlank() || "/".equals(decoded)) {
             return "/";
         }
+
+        // Filter empty segments and rejoin
         String[] parts = decoded.split("/");
         List<String> cleaned = new ArrayList<>();
         for (String part : parts) {
@@ -41,11 +44,13 @@ public final class WebPaths {
     }
 
     public static String encodeWebPath(String path) {
+        // Normalize and handle root path
         String normalized = normalizeWebPath(path);
         if ("/".equals(normalized)) {
             return "/";
         }
 
+        // Percent-encode each path segment
         String[] parts = normalized.split("/");
         List<String> encoded = new ArrayList<>();
         for (String part : parts) {

@@ -35,12 +35,14 @@ final class ImageApiHandler {
             return;
         }
 
+        // Verify authentication
         Optional<String> cookie = HttpHelper.readCookie(exchange, sessionManager.cookieName());
         if (cookie.isEmpty() || !sessionManager.isAuthenticated(cookie.get(), HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange))) {
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
+        // Resolve filesystem path
         Path imageFsPath;
         try {
             imageFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
@@ -50,12 +52,14 @@ final class ImageApiHandler {
             return;
         }
 
+        // Validate image file
         if (!Files.isRegularFile(imageFsPath) || !ImageTypes.isImageFile(imageFsPath.getFileName().toString())) {
             panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Image not found"));
             return;
         }
 
+        // Set cache headers
         long size = Files.size(imageFsPath);
         FileTime lastModified = Files.getLastModifiedTime(imageFsPath);
         String eTag = CacheHelper.buildETag(size, lastModified.toMillis());
@@ -65,11 +69,13 @@ final class ImageApiHandler {
         exchange.getResponseHeaders().set("ETag", eTag);
         exchange.getResponseHeaders().set("Last-Modified", CacheHelper.formatHttpDate(lastModified.toMillis()));
 
+        // Return 304 if not modified
         if (CacheHelper.isNotModified(exchange, eTag, lastModified.toMillis())) {
             exchange.sendResponseHeaders(304, -1);
             return;
         }
 
+        // Stream image to response
         exchange.sendResponseHeaders(200, size);
         try (OutputStream out = exchange.getResponseBody();
              InputStream in = Files.newInputStream(imageFsPath)) {

@@ -40,9 +40,11 @@ final class AuthApiHandler {
             return;
         }
 
+        // Extract client info
         String sourceIp = HttpHelper.getSourceIp(exchange);
         String userAgent = HttpHelper.getUserAgent(exchange);
 
+        // Parse request body
         LoginRequest request;
         try {
             request = JsonHelper.readJson(exchange, LoginRequest.class);
@@ -52,12 +54,14 @@ final class AuthApiHandler {
             return;
         }
 
+        // Validate credentials
         if (!settings.username().equals(request.username()) || !settings.password().equals(request.password())) {
             panicMonitor.recordEvent(ThreatEvent.FAILED_LOGIN, sourceIp, userAgent);
             JsonHelper.sendJson(exchange, 401, Map.of("success", false, "error", "Invalid credentials"));
             return;
         }
 
+        // Create session and set cookie
         String sessionId = sessionManager.createSession(request.username(), sourceIp, userAgent);
         exchange.getResponseHeaders().add("Set-Cookie",
                 sessionManager.cookieName() + "=" + sessionId + "; Path=/; HttpOnly; SameSite=Strict");
@@ -69,8 +73,12 @@ final class AuthApiHandler {
             JsonHelper.sendJson(exchange, 405, Map.of("error", "Method not allowed"));
             return;
         }
+
+        // Invalidate session
         Optional<String> sessionId = HttpHelper.readCookie(exchange, sessionManager.cookieName());
         sessionId.ifPresent(sessionManager::removeSession);
+
+        // Clear cookie and respond
         exchange.getResponseHeaders().add("Set-Cookie",
                 sessionManager.cookieName() + "=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0");
         JsonHelper.sendJson(exchange, 200, Map.of());

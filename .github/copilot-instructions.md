@@ -99,6 +99,20 @@ import org.junit.jupiter.api.Test;
 
 After modifying any source file, run `./gradlew spotlessApply` to enforce consistent formatting (import order, trailing whitespace, final newline). The `spotlessCheck` task — wired into `check` — will fail the build if files are out of compliance.
 
+### Inline Comments
+
+Any production method body that contains two or more distinct logical phases must have a section label comment before each phase. A **phase** is a group of statements that share a single purpose; when one purpose ends and another begins, a comment is required. Line count is irrelevant — a 6-line method with three phases needs three labels; a 15-line method that does one thing needs none.
+
+Comments are section *labels*, not prose:
+
+- Use an **imperative verb phrase**: `// Validate input`, `// Build response`, `// Send error`.
+- Place the comment on its own line **immediately before** the phase it labels — never at the end of a line. Always leave a blank line above the comment (except at the very start of a method body).
+- Do **not** comment self-evident single statements where the identifier names already convey the meaning (e.g., `list.sort(comparator)` needs no comment).
+- Do **not** paraphrase what the code literally does — the comment must add meaning the reader could not instantly derive from the identifiers alone. If you cannot write a comment that adds meaning, the code is already clear enough.
+- If a phase is difficult to label concisely, that is a signal to extract a helper method instead.
+
+This rule applies to **production code only**. Test methods follow the AAA pattern (`// Arrange`, `// Act`, `// Assert`) defined in the Testing Guidelines above.
+
 ## Setup Reference
 
 - For user-facing setup, configuration examples, and run/test commands, use `README.md` as the canonical source.

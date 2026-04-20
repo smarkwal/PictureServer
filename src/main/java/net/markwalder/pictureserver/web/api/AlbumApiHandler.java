@@ -39,6 +39,7 @@ final class AlbumApiHandler {
 
         String albumWebPath = WebPaths.normalizeWebPath(pathSuffix);
 
+        // Resolve filesystem path
         Path albumFsPath;
         try {
             albumFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
@@ -48,14 +49,17 @@ final class AlbumApiHandler {
             return;
         }
 
+        // Validate directory exists
         if (!Files.isDirectory(albumFsPath)) {
             panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Album not found"));
             return;
         }
 
+        // List album contents
         AlbumService.AlbumInfo info = AlbumService.listAlbum(albumFsPath);
 
+        // Build album preview URLs
         String encodedAlbumWebPath = WebPaths.encodeWebPath(albumWebPath);
         String base = "/".equals(albumWebPath) ? "" : albumWebPath;
         Map<String, String> albumPreviews = new LinkedHashMap<>();
@@ -64,6 +68,7 @@ final class AlbumApiHandler {
             albumPreviews.put(album, "/api/images" + WebPaths.encodeWebPath(previewPath));
         });
 
+        // Send response
         JsonHelper.sendJson(exchange, 200, new AlbumResponse(encodedAlbumWebPath, info.albums(), albumPreviews, info.pictures()));
     }
 }

@@ -33,6 +33,7 @@ final class PictureApiHandler {
         String pictureWebPath = WebPaths.normalizeWebPath(pathSuffix);
         String encodedPictureWebPath = WebPaths.encodeWebPath(pictureWebPath);
 
+        // Resolve filesystem path
         Path pictureFsPath;
         try {
             pictureFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
@@ -42,12 +43,14 @@ final class PictureApiHandler {
             return;
         }
 
+        // Validate image file
         if (!Files.isRegularFile(pictureFsPath) || !ImageTypes.isImageFile(pictureFsPath.getFileName().toString())) {
             panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Picture not found"));
             return;
         }
 
+        // Build sibling list
         PictureService.PictureInfo info = PictureService.getPictureInfo(pictureFsPath);
 
         String parentWebPath = WebPaths.parentWebPath(pictureWebPath);
@@ -58,11 +61,13 @@ final class PictureApiHandler {
             siblings.add(WebPaths.encodeWebPath(parentPrefix + "/" + name));
         }
 
+        // Send response
         String src = "/api/images" + encodedPictureWebPath;
         JsonHelper.sendJson(exchange, 200, new PictureResponse(encodedPictureWebPath, src, siblings));
     }
 
     void handleDelete(HttpExchange exchange, String pathSuffix) throws IOException {
+        // Resolve filesystem path
         Path pictureFsPath;
         try {
             pictureFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
@@ -72,11 +77,13 @@ final class PictureApiHandler {
             return;
         }
 
+        // Validate image file
         if (!Files.isRegularFile(pictureFsPath) || !ImageTypes.isImageFile(pictureFsPath.getFileName().toString())) {
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Picture not found"));
             return;
         }
 
+        // Move to trash
         if (!moveToTrash(pictureFsPath)) {
             JsonHelper.sendJson(exchange, 500, Map.of("error", "Moving to trash is not supported on this system"));
             return;

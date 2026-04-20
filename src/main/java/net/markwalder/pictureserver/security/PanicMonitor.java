@@ -32,8 +32,12 @@ public final class PanicMonitor {
 
     public void checkPath(String path, String sourceIp, String userAgent) {
         if (!settings.enabled() || !settings.knownAttackProbeEnabled()) return;
+
+        // Classify path against known attack prefixes
         String lower = path.toLowerCase();
         boolean isAttackProbe = KNOWN_ATTACK_PATH_PREFIXES.stream().anyMatch(lower::startsWith);
+
+        // Trigger panic on match
         if (isAttackProbe) {
             logEvent(ThreatEvent.KNOWN_ATTACK_PROBE, sourceIp, userAgent, "path=" + path);
             triggerPanic(ThreatEvent.KNOWN_ATTACK_PROBE, sourceIp, userAgent);
@@ -67,10 +71,12 @@ public final class PanicMonitor {
     }
 
     private void checkThreshold(ThreatEvent event, String sourceIp, String userAgent, int threshold, int windowSeconds) {
+        // Compute time window
         String key = event.name() + ":" + sourceIp;
         long now = System.currentTimeMillis();
         long windowStart = now - (windowSeconds * 1000L);
 
+        // Record event and count within window
         Deque<Long> timestamps = eventLog.computeIfAbsent(key, k -> new ArrayDeque<>());
         int count;
         synchronized (timestamps) {
@@ -81,6 +87,7 @@ public final class PanicMonitor {
             count = timestamps.size();
         }
 
+        // Trigger panic if threshold reached
         logEvent(event, sourceIp, userAgent, "count=" + count + "/" + threshold);
         if (count >= threshold) {
             triggerPanic(event, sourceIp, userAgent);
@@ -99,6 +106,8 @@ public final class PanicMonitor {
         if (!panicking.compareAndSet(false, true)) {
             return;
         }
+
+        // Invalidate all sessions and initiate shutdown
         Logger.log("PANIC MODE: %s from %s (User-Agent: %s) — shutting down", event, sourceIp, userAgent);
         sessionManager.clearAllSessions();
         new Thread(shutdownAction, "panic-shutdown-thread").start();

@@ -25,12 +25,16 @@ public final class StaticAssetHandler {
             sendError(exchange, 405);
             return;
         }
+
+        // Extract filename from path
         String path = exchange.getRequestURI().getPath();
         String filename = path.startsWith("/assets/") ? path.substring("/assets/".length()) : "";
         if (filename.isEmpty() || filename.contains("..")) {
             sendIndex(exchange);
             return;
         }
+
+        // Serve asset from classpath
         serveClasspathResource(exchange, "/assets/" + filename, contentType(filename));
     }
 
@@ -39,12 +43,14 @@ public final class StaticAssetHandler {
     }
 
     private static void serveClasspathResource(HttpExchange exchange, String resource, String contentType) throws IOException {
+        // Locate classpath resource
         URL url = StaticAssetHandler.class.getResource(resource);
         if (url == null) {
             sendError(exchange, 404);
             return;
         }
 
+        // Load resource bytes
         URLConnection conn = url.openConnection();
         long lastModifiedMillis = conn.getLastModified();
         byte[] bytes;
@@ -52,17 +58,20 @@ public final class StaticAssetHandler {
             bytes = in.readAllBytes();
         }
 
+        // Set caching headers
         String eTag = CacheHelper.buildETag(bytes.length, lastModifiedMillis);
         exchange.getResponseHeaders().set("Content-Type", contentType);
         exchange.getResponseHeaders().set("Cache-Control", "public, no-cache");
         exchange.getResponseHeaders().set("ETag", eTag);
         exchange.getResponseHeaders().set("Last-Modified", CacheHelper.formatHttpDate(lastModifiedMillis));
 
+        // Return 304 if not modified
         if (CacheHelper.isNotModified(exchange, eTag, lastModifiedMillis)) {
             exchange.sendResponseHeaders(304, -1);
             return;
         }
 
+        // Send response body
         exchange.sendResponseHeaders(200, bytes.length);
         try (OutputStream out = exchange.getResponseBody()) {
             out.write(bytes);

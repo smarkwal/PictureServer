@@ -23,16 +23,19 @@ public final class CacheHelper {
     }
 
     public static boolean isNotModified(HttpExchange exchange, String eTag, long lastModifiedMillis) {
+        // Check ETag match
         String ifNoneMatch = exchange.getRequestHeaders().getFirst("If-None-Match");
         if (ifNoneMatch != null) {
             return eTagMatches(ifNoneMatch, eTag);
         }
 
+        // Check If-Modified-Since date
         String ifModifiedSince = exchange.getRequestHeaders().getFirst("If-Modified-Since");
         if (ifModifiedSince == null) {
             return false;
         }
 
+        // Parse and compare modification time
         try {
             long requestTimeMillis = ZonedDateTime.parse(ifModifiedSince, HTTP_DATE_FORMATTER)
                     .toInstant()

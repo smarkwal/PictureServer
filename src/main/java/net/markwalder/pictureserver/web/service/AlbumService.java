@@ -30,6 +30,7 @@ public final class AlbumService {
         List<String> albums = new ArrayList<>();
         List<String> pictures = new ArrayList<>();
 
+        // Scan directory and categorize entries
         try (Stream<Path> list = Files.list(albumFsPath)) {
             list.sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)))
                     .forEachOrdered(child -> {
@@ -42,6 +43,7 @@ public final class AlbumService {
                     });
         }
 
+        // Find preview image for each album
         Map<String, String> albumFirstImages = new LinkedHashMap<>();
         for (String album : albums) {
             Path albumDir = albumFsPath.resolve(album);

@@ -36,6 +36,7 @@ public final class ApiRouter {
         String method = exchange.getRequestMethod();
 
         try {
+            // Handle unauthenticated endpoints
             if ("GET".equals(method) && "/api/session".equals(path)) {
                 sessionHandler.handle(exchange);
                 return;
@@ -49,11 +50,13 @@ public final class ApiRouter {
                 return;
             }
 
+            // Verify authentication
             if (!isAuthenticated(exchange)) {
                 JsonHelper.sendJson(exchange, 401, Map.of("error", "Not authenticated"));
                 return;
             }
 
+            // Route authenticated endpoints
             if ("GET".equals(method) && path.startsWith("/api/albums")) {
                 String suffix = path.substring("/api/albums".length());
                 albumHandler.handle(exchange, suffix);
@@ -89,10 +92,13 @@ public final class ApiRouter {
     }
 
     private boolean isAuthenticated(HttpExchange exchange) {
+        // Check for session cookie
         Optional<String> cookie = HttpHelper.readCookie(exchange, sessionManager.cookieName());
         if (cookie.isEmpty()) {
             return false;
         }
+
+        // Validate session and record threat on failure
         String sourceIp = HttpHelper.getSourceIp(exchange);
         String userAgent = HttpHelper.getUserAgent(exchange);
         if (!sessionManager.isAuthenticated(cookie.get(), sourceIp, userAgent)) {

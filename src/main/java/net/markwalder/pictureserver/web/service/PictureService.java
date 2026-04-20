@@ -19,6 +19,7 @@ public final class PictureService {
     }
 
     public static PictureInfo getPictureInfo(Path pictureFsPath) throws IOException {
+        // List image siblings in the same directory
         List<String> siblingNames = new ArrayList<>();
         Path parentDir = pictureFsPath.getParent();
         if (parentDir != null) {

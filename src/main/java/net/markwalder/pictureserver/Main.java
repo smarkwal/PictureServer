@@ -20,11 +20,13 @@ public final class Main {
     public static void main(String[] args) throws IOException {
         String version = Main.class.getPackage().getImplementationVersion();
 
+        // Load settings
         Path cwd = Path.of(System.getProperty("user.dir"));
         Path settingsFile = cwd.resolve("settings.properties");
 
         Settings settings = SettingsLoader.load(settingsFile, cwd);
 
+        // Build server and components
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", settings.port()), 0);
         SessionManager sessionManager = new SessionManager();
         Runnable shutdownAction = () -> {
@@ -35,6 +37,7 @@ public final class Main {
         ApiRouter apiRouter = new ApiRouter(settings, sessionManager, panicMonitor, shutdownAction);
         RequestRouter requestRouter = new RequestRouter(panicMonitor, apiRouter);
 
+        // Configure and start server
         server.createContext("/", requestRouter);
         server.setExecutor(Executors.newFixedThreadPool(16));
 
