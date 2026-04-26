@@ -166,7 +166,7 @@ class ImageApiHandlerTest {
         // Assert
         assertThat(responseStatus.get()).isEqualTo(200);
         assertThat(responseHeaders.getFirst("Content-Type")).isEqualTo("image/jpeg");
-        assertThat(responseHeaders.getFirst("Cache-Control")).isEqualTo("private, must-revalidate");
+        assertThat(responseHeaders.getFirst("Cache-Control")).isEqualTo("private, max-age=2592000");
         assertThat(responseHeaders.getFirst("ETag")).isNotBlank();
         assertThat(responseHeaders.getFirst("Last-Modified")).isNotBlank();
         assertThat(responseBodyOut.toByteArray()).containsExactly(content);

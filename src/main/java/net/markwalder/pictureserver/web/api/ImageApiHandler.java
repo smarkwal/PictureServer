@@ -65,7 +65,7 @@ final class ImageApiHandler {
         String eTag = CacheHelper.buildETag(size, lastModified.toMillis());
 
         exchange.getResponseHeaders().set("Content-Type", ImageTypes.mimeType(imageFsPath.getFileName().toString()));
-        exchange.getResponseHeaders().set("Cache-Control", "private, must-revalidate");
+        exchange.getResponseHeaders().set("Cache-Control", "private, max-age=2592000");
         exchange.getResponseHeaders().set("ETag", eTag);
         exchange.getResponseHeaders().set("Last-Modified", CacheHelper.formatHttpDate(lastModified.toMillis()));
 
