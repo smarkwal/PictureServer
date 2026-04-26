@@ -2,17 +2,15 @@ package net.markwalder.pictureserver.web.api;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.markwalder.pictureserver.config.Settings;
+import java.util.Optional;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
-import net.markwalder.pictureserver.web.PathSafety;
 import net.markwalder.pictureserver.web.WebPaths;
-import net.markwalder.pictureserver.web.service.AlbumService;
+import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.AlbumInfo;
 
 final class AlbumApiHandler {
 
@@ -23,11 +21,11 @@ final class AlbumApiHandler {
             List<String> pictures) {
     }
 
-    private final Settings settings;
+    private final PictureRepository repository;
     private final PanicMonitor panicMonitor;
 
-    AlbumApiHandler(Settings settings, PanicMonitor panicMonitor) {
-        this.settings = settings;
+    AlbumApiHandler(PictureRepository repository, PanicMonitor panicMonitor) {
+        this.repository = repository;
         this.panicMonitor = panicMonitor;
     }
 
@@ -39,27 +37,24 @@ final class AlbumApiHandler {
 
         String albumWebPath = WebPaths.normalizeWebPath(pathSuffix);
 
-        // Resolve filesystem path
-        Path albumFsPath;
+        // Fetch album info
+        Optional<AlbumInfo> albumInfo;
         try {
-            albumFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
+            albumInfo = repository.getAlbumInfo(pathSuffix);
         } catch (SecurityException ex) {
             panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
-        // Validate directory exists
-        if (!Files.isDirectory(albumFsPath)) {
+        if (albumInfo.isEmpty()) {
             panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Album not found"));
             return;
         }
 
-        // List album contents
-        AlbumService.AlbumInfo info = AlbumService.listAlbum(albumFsPath);
-
-        // Build album preview URLs
+        // Build response
+        AlbumInfo info = albumInfo.get();
         String encodedAlbumWebPath = WebPaths.encodeWebPath(albumWebPath);
         String base = "/".equals(albumWebPath) ? "" : albumWebPath;
         Map<String, String> albumPreviews = new LinkedHashMap<>();
@@ -68,7 +63,6 @@ final class AlbumApiHandler {
             albumPreviews.put(album, "/api/images" + WebPaths.encodeWebPath(previewPath));
         });
 
-        // Send response
         JsonHelper.sendJson(exchange, 200, new AlbumResponse(encodedAlbumWebPath, info.albums(), albumPreviews, info.pictures()));
     }
 }

@@ -20,6 +20,7 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
+import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,8 +53,9 @@ class AlbumApiHandlerTest {
     @BeforeEach
     void setUp() throws Exception {
         Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
+        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings);
         PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, new SessionManager(), () -> {});
-        handler = new AlbumApiHandler(settings, panicMonitor);
+        handler = new AlbumApiHandler(repository, panicMonitor);
 
         responseBodyOut = new ByteArrayOutputStream();
         InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);

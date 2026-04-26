@@ -22,6 +22,7 @@ import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.web.CacheHelper;
+import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +60,8 @@ class ImageApiHandlerTest {
         Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
         sessionManager = new SessionManager();
         PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, sessionManager, () -> {});
-        handler = new ImageApiHandler(settings, sessionManager, panicMonitor);
+        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings);
+        handler = new ImageApiHandler(repository, sessionManager, panicMonitor);
 
         responseBodyOut = new ByteArrayOutputStream();
         InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getByName(IP), 0);

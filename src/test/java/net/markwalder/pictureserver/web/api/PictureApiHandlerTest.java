@@ -21,6 +21,7 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
+import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,9 +69,10 @@ class PictureApiHandlerTest {
         }).when(exchange).sendResponseHeaders(anyInt(), anyLong());
     }
 
-    private PictureApiHandler createHandler(PictureApiHandler.TrashMover trashMover) {
+    private PictureApiHandler createHandler(FilesystemPictureRepository.TrashMover trashMover) {
         Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
-        return new PictureApiHandler(settings, panicMonitor, trashMover);
+        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings, trashMover);
+        return new PictureApiHandler(repository, panicMonitor);
     }
 
     @Test

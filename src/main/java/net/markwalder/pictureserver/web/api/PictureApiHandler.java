@@ -1,69 +1,52 @@
 package net.markwalder.pictureserver.web.api;
 
 import com.sun.net.httpserver.HttpExchange;
-import java.awt.Desktop;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import net.markwalder.pictureserver.config.Settings;
+import java.util.Optional;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
-import net.markwalder.pictureserver.web.ImageTypes;
-import net.markwalder.pictureserver.web.PathSafety;
 import net.markwalder.pictureserver.web.WebPaths;
-import net.markwalder.pictureserver.web.service.PictureService;
+import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.PictureInfo;
 
 final class PictureApiHandler {
 
     private record PictureResponse(String path, String name, String src, List<String> siblings) {
     }
 
-    @FunctionalInterface
-    interface TrashMover {
-        boolean moveToTrash(Path imagePath);
-    }
-
-    private final Settings settings;
+    private final PictureRepository repository;
     private final PanicMonitor panicMonitor;
-    private final TrashMover trashMover;
 
-    PictureApiHandler(Settings settings, PanicMonitor panicMonitor) {
-        this(settings, panicMonitor, PictureApiHandler::moveToTrashWithDesktop);
-    }
-
-    PictureApiHandler(Settings settings, PanicMonitor panicMonitor, TrashMover trashMover) {
-        this.settings = settings;
+    PictureApiHandler(PictureRepository repository, PanicMonitor panicMonitor) {
+        this.repository = repository;
         this.panicMonitor = panicMonitor;
-        this.trashMover = trashMover;
     }
 
     void handleGet(HttpExchange exchange, String pathSuffix) throws IOException {
         String pictureWebPath = WebPaths.normalizeWebPath(pathSuffix);
         String encodedPictureWebPath = WebPaths.encodeWebPath(pictureWebPath);
 
-        // Resolve filesystem path
-        Path pictureFsPath;
+        // Fetch picture info
+        Optional<PictureInfo> pictureInfo;
         try {
-            pictureFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
+            pictureInfo = repository.getPictureInfo(pathSuffix);
         } catch (SecurityException ex) {
             panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
-        // Validate image file
-        if (!Files.isRegularFile(pictureFsPath) || !ImageTypes.isImageFile(pictureFsPath.getFileName().toString())) {
+        if (pictureInfo.isEmpty()) {
             panicMonitor.recordEvent(ThreatEvent.EXCESSIVE_404, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Picture not found"));
             return;
         }
 
-        // Build sibling list
-        PictureService.PictureInfo info = PictureService.getPictureInfo(pictureFsPath);
-
+        // Build response
+        PictureInfo info = pictureInfo.get();
         String parentWebPath = WebPaths.parentWebPath(pictureWebPath);
         String parentPrefix = (parentWebPath == null || "/".equals(parentWebPath)) ? "" : parentWebPath;
 
@@ -72,46 +55,32 @@ final class PictureApiHandler {
             siblings.add(WebPaths.encodeWebPath(parentPrefix + "/" + name));
         }
 
-        // Send response
         String src = "/api/images" + encodedPictureWebPath;
-        String pictureName = pictureFsPath.getFileName().toString();
+        String pictureName = pictureWebPath.substring(pictureWebPath.lastIndexOf('/') + 1);
         JsonHelper.sendJson(exchange, 200, new PictureResponse(encodedPictureWebPath, pictureName, src, siblings));
     }
 
     void handleDelete(HttpExchange exchange, String pathSuffix) throws IOException {
-        // Resolve filesystem path
-        Path pictureFsPath;
+        // Move to trash
+        Optional<Boolean> result;
         try {
-            pictureFsPath = PathSafety.resolveSafePath(pathSuffix, settings.rootDirectory());
+            result = repository.moveToTrash(pathSuffix);
         } catch (SecurityException ex) {
             panicMonitor.recordEvent(ThreatEvent.PATH_TRAVERSAL_ATTEMPT, HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange));
             JsonHelper.sendJson(exchange, 403, Map.of("error", "Forbidden"));
             return;
         }
 
-        // Validate image file
-        if (!Files.isRegularFile(pictureFsPath) || !ImageTypes.isImageFile(pictureFsPath.getFileName().toString())) {
+        if (result.isEmpty()) {
             JsonHelper.sendJson(exchange, 404, Map.of("error", "Picture not found"));
             return;
         }
 
-        // Move to trash
-        if (!trashMover.moveToTrash(pictureFsPath)) {
+        if (!result.get()) {
             JsonHelper.sendJson(exchange, 500, Map.of("error", "Moving to trash is not supported on this system"));
             return;
         }
 
         JsonHelper.sendJson(exchange, 200, Map.of("success", true));
-    }
-
-    private static boolean moveToTrashWithDesktop(Path imagePath) {
-        if (!Desktop.isDesktopSupported()) {
-            return false;
-        }
-        Desktop desktop = Desktop.getDesktop();
-        if (!desktop.isSupported(Desktop.Action.MOVE_TO_TRASH)) {
-            return false;
-        }
-        return desktop.moveToTrash(imagePath.toFile());
     }
 }
