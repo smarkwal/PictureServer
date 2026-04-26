@@ -63,7 +63,7 @@ final class AuthApiHandler {
 
         // Create session and set cookie
         String sessionId = sessionManager.createSession(request.username(), sourceIp, userAgent);
-        String loginCookie = sessionManager.cookieName() + "=" + sessionId + "; Path=/; HttpOnly; SameSite=Strict";
+        String loginCookie = sessionManager.cookieName() + "=" + sessionId + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000";
         exchange.getResponseHeaders().add("Set-Cookie", loginCookie);
         JsonHelper.sendJson(exchange, 200, Map.of("success", true));
     }

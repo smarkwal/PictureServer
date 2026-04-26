@@ -180,6 +180,7 @@ class AuthApiHandlerTest {
         assertThat(setCookie).startsWith("PSSESSION=");
         assertThat(setCookie).contains("HttpOnly");
         assertThat(setCookie).contains("SameSite=Strict");
+        assertThat(setCookie).contains("Max-Age=31536000");
     }
 
     @Test
