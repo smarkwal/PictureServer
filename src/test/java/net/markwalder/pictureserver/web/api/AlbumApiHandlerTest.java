@@ -13,18 +13,18 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.markwalder.pictureserver.auth.SessionManager;
-import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
-import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.AlbumInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -37,11 +37,11 @@ class AlbumApiHandlerTest {
     private static final PanicSettings PANIC_SETTINGS =
             new PanicSettings(true, true, true, 5, 60, 5, 60, 10, 60, 5, 60);
 
-    @TempDir
-    Path rootDir;
-
     @Mock
     HttpExchange exchange;
+
+    @Mock
+    PictureRepository repository;
 
     private final Headers requestHeaders = new Headers();
     private final Headers responseHeaders = new Headers();
@@ -52,8 +52,6 @@ class AlbumApiHandlerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
-        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings);
         PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, new SessionManager(), () -> {});
         handler = new AlbumApiHandler(repository, panicMonitor);
 
@@ -87,6 +85,7 @@ class AlbumApiHandlerTest {
     void handle_returns403ForPathTraversalAttempt() throws IOException {
         // Arrange
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getAlbumInfo("/../etc/passwd")).thenThrow(new SecurityException());
 
         // Act
         handler.handle(exchange, "/../etc/passwd");
@@ -99,6 +98,7 @@ class AlbumApiHandlerTest {
     void handle_returns404WhenAlbumDoesNotExist() throws IOException {
         // Arrange
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getAlbumInfo("/missing-album")).thenReturn(Optional.empty());
 
         // Act
         handler.handle(exchange, "/missing-album");
@@ -110,14 +110,12 @@ class AlbumApiHandlerTest {
     @Test
     void handle_returnsAlbumResponseForExistingDirectory() throws IOException {
         // Arrange
-        Path cities = rootDir.resolve("Cities");
-        Path trips = rootDir.resolve("Trips 2024");
-        Files.createDirectories(cities);
-        Files.createDirectories(trips);
-        Files.write(rootDir.resolve("cover.jpg"), new byte[] {1});
-        Files.write(cities.resolve("tokyo.png"), new byte[] {2});
-        Files.write(trips.resolve("beach photo.jpg"), new byte[] {3});
+        AlbumInfo albumInfo = new AlbumInfo(
+                List.of("Cities", "Trips 2024"),
+                Map.of("Cities", "tokyo.png", "Trips 2024", "beach photo.jpg"),
+                List.of("cover.jpg"));
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getAlbumInfo("/")).thenReturn(Optional.of(albumInfo));
 
         // Act
         handler.handle(exchange, "/");

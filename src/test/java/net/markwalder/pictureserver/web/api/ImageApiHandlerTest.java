@@ -8,25 +8,22 @@ import static org.mockito.Mockito.when;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.markwalder.pictureserver.auth.SessionManager;
-import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.web.CacheHelper;
-import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.ImageInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -41,11 +38,11 @@ class ImageApiHandlerTest {
     private static final PanicSettings PANIC_SETTINGS =
             new PanicSettings(true, true, true, 5, 60, 5, 60, 10, 60, 5, 60);
 
-    @TempDir
-    Path rootDir;
-
     @Mock
     HttpExchange exchange;
+
+    @Mock
+    PictureRepository repository;
 
     private final Headers requestHeaders = new Headers();
     private final Headers responseHeaders = new Headers();
@@ -57,10 +54,8 @@ class ImageApiHandlerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
         sessionManager = new SessionManager();
         PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, sessionManager, () -> {});
-        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings);
         handler = new ImageApiHandler(repository, sessionManager, panicMonitor);
 
         responseBodyOut = new ByteArrayOutputStream();
@@ -111,6 +106,7 @@ class ImageApiHandlerTest {
         // Arrange
         authenticateSession();
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getImageInfo("/../etc/passwd")).thenThrow(new SecurityException());
 
         // Act
         handler.handle(exchange, "/../etc/passwd");
@@ -123,8 +119,8 @@ class ImageApiHandlerTest {
     void handle_returns404ForNonImageFile() throws IOException {
         // Arrange
         authenticateSession();
-        Files.write(rootDir.resolve("notes.txt"), "hello".getBytes(StandardCharsets.UTF_8));
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getImageInfo("/notes.txt")).thenReturn(Optional.empty());
 
         // Act
         handler.handle(exchange, "/notes.txt");
@@ -137,13 +133,12 @@ class ImageApiHandlerTest {
     void handle_returns304WhenResourceNotModified() throws IOException {
         // Arrange
         authenticateSession();
-        Path imagePath = rootDir.resolve("photo.jpg");
-        Files.write(imagePath, new byte[] {1, 2, 3});
-        long size = Files.size(imagePath);
-        FileTime lastModified = Files.getLastModifiedTime(imagePath);
-        String eTag = CacheHelper.buildETag(size, lastModified.toMillis());
-        requestHeaders.set("If-None-Match", eTag);
+        long size = 3L;
+        long lastModified = 1_700_000_000_000L;
+        String eTag = CacheHelper.buildETag(size, lastModified);
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getImageInfo("/photo.jpg")).thenReturn(Optional.of(new ImageInfo(size, lastModified, "photo.jpg")));
+        requestHeaders.set("If-None-Match", eTag);
 
         // Act
         handler.handle(exchange, "/photo.jpg");
@@ -157,10 +152,12 @@ class ImageApiHandlerTest {
     void handle_streamsImageAndSetsCacheHeaders() throws IOException {
         // Arrange
         authenticateSession();
-        Path imagePath = rootDir.resolve("photo.jpg");
         byte[] content = new byte[] {7, 8, 9};
-        Files.write(imagePath, content);
+        long size = content.length;
+        long lastModified = 1_700_000_000_000L;
         when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getImageInfo("/photo.jpg")).thenReturn(Optional.of(new ImageInfo(size, lastModified, "photo.jpg")));
+        when(repository.openImage("/photo.jpg")).thenReturn(Optional.of(new ByteArrayInputStream(content)));
 
         // Act
         handler.handle(exchange, "/photo.jpg");

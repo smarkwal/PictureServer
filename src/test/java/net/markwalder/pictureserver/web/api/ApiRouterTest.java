@@ -15,18 +15,21 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
-import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.AlbumInfo;
+import net.markwalder.pictureserver.web.service.PictureRepository.PictureInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -41,11 +44,11 @@ class ApiRouterTest {
     private static final PanicSettings PANIC_SETTINGS =
             new PanicSettings(true, true, true, 5, 60, 5, 60, 10, 60, 5, 60);
 
-    @TempDir
-    Path rootDir;
-
     @Mock
     HttpExchange exchange;
+
+    @Mock
+    PictureRepository repository;
 
     private final Headers requestHeaders = new Headers();
     private final Headers responseHeaders = new Headers();
@@ -57,10 +60,9 @@ class ApiRouterTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
+        Settings settings = new Settings(Path.of(""), 8080, "admin", "secret", PANIC_SETTINGS);
         sessionManager = new SessionManager();
         PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, sessionManager, () -> {});
-        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings);
         router = new ApiRouter(settings, repository, sessionManager, panicMonitor, () -> {});
 
         requestHeaders.set("User-Agent", UA);
@@ -209,6 +211,8 @@ class ApiRouterTest {
     @Test
     void handle_routesToAlbumHandlerWhenAuthenticated() throws IOException {
         // Arrange
+        AlbumInfo albumInfo = new AlbumInfo(List.of(), Map.of(), List.of());
+        when(repository.getAlbumInfo("")).thenReturn(Optional.of(albumInfo));
         setupRequest("GET", "/api/albums");
         authenticateSession();
 
@@ -222,9 +226,8 @@ class ApiRouterTest {
     @Test
     void handle_returnsPictureNameForBreadcrumbWhenAuthenticated() throws IOException {
         // Arrange
-        Path picturePath = rootDir.resolve("album/holiday photo.jpg");
-        Files.createDirectories(picturePath.getParent());
-        Files.write(picturePath, new byte[] {0});
+        PictureInfo pictureInfo = new PictureInfo(List.of("holiday photo.jpg"));
+        when(repository.getPictureInfo("/album/holiday photo.jpg")).thenReturn(Optional.of(pictureInfo));
         setupRequest("GET", "/api/pictures/album/holiday%20photo.jpg");
         authenticateSession();
 

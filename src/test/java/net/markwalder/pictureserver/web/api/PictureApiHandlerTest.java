@@ -13,19 +13,17 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import net.markwalder.pictureserver.auth.SessionManager;
-import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
-import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.PictureInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -38,22 +36,23 @@ class PictureApiHandlerTest {
     private static final PanicSettings PANIC_SETTINGS =
             new PanicSettings(true, true, true, 5, 60, 5, 60, 10, 60, 5, 60);
 
-    @TempDir
-    Path rootDir;
-
     @Mock
     HttpExchange exchange;
+
+    @Mock
+    PictureRepository repository;
 
     private final Headers requestHeaders = new Headers();
     private final Headers responseHeaders = new Headers();
     private final AtomicInteger responseStatus = new AtomicInteger(-1);
     private ByteArrayOutputStream responseBodyOut;
 
-    private PanicMonitor panicMonitor;
+    private PictureApiHandler handler;
 
     @BeforeEach
     void setUp() throws Exception {
-        panicMonitor = new PanicMonitor(PANIC_SETTINGS, new SessionManager(), () -> {});
+        PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, new SessionManager(), () -> {});
+        handler = new PictureApiHandler(repository, panicMonitor);
 
         responseBodyOut = new ByteArrayOutputStream();
         InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
@@ -69,16 +68,10 @@ class PictureApiHandlerTest {
         }).when(exchange).sendResponseHeaders(anyInt(), anyLong());
     }
 
-    private PictureApiHandler createHandler(FilesystemPictureRepository.TrashMover trashMover) {
-        Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
-        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings, trashMover);
-        return new PictureApiHandler(repository, panicMonitor);
-    }
-
     @Test
     void handleGet_returns403ForPathTraversalAttempt() throws IOException {
         // Arrange
-        PictureApiHandler handler = createHandler(path -> true);
+        when(repository.getPictureInfo("/../etc/passwd")).thenThrow(new SecurityException());
 
         // Act
         handler.handleGet(exchange, "/../etc/passwd");
@@ -90,7 +83,7 @@ class PictureApiHandlerTest {
     @Test
     void handleGet_returns404ForMissingPicture() throws IOException {
         // Arrange
-        PictureApiHandler handler = createHandler(path -> true);
+        when(repository.getPictureInfo("/missing.jpg")).thenReturn(Optional.empty());
 
         // Act
         handler.handleGet(exchange, "/missing.jpg");
@@ -102,11 +95,8 @@ class PictureApiHandlerTest {
     @Test
     void handleGet_returnsPictureResponseWithSiblings() throws IOException {
         // Arrange
-        Path albumDir = rootDir.resolve("My Album");
-        Files.createDirectories(albumDir);
-        Files.write(albumDir.resolve("a.jpg"), new byte[] {1});
-        Files.write(albumDir.resolve("b photo.jpg"), new byte[] {2});
-        PictureApiHandler handler = createHandler(path -> true);
+        PictureInfo pictureInfo = new PictureInfo(List.of("a.jpg", "b photo.jpg"));
+        when(repository.getPictureInfo("/My%20Album/b%20photo.jpg")).thenReturn(Optional.of(pictureInfo));
 
         // Act
         handler.handleGet(exchange, "/My%20Album/b%20photo.jpg");
@@ -123,7 +113,7 @@ class PictureApiHandlerTest {
     @Test
     void handleDelete_returns403ForPathTraversalAttempt() throws IOException {
         // Arrange
-        PictureApiHandler handler = createHandler(path -> true);
+        when(repository.moveToTrash("/../etc/passwd")).thenThrow(new SecurityException());
 
         // Act
         handler.handleDelete(exchange, "/../etc/passwd");
@@ -135,8 +125,7 @@ class PictureApiHandlerTest {
     @Test
     void handleDelete_returns404ForNonImageFile() throws IOException {
         // Arrange
-        Files.write(rootDir.resolve("notes.txt"), "hello".getBytes(StandardCharsets.UTF_8));
-        PictureApiHandler handler = createHandler(path -> true);
+        when(repository.moveToTrash("/notes.txt")).thenReturn(Optional.empty());
 
         // Act
         handler.handleDelete(exchange, "/notes.txt");
@@ -148,8 +137,7 @@ class PictureApiHandlerTest {
     @Test
     void handleDelete_returns500WhenMoveToTrashNotSupported() throws IOException {
         // Arrange
-        Files.write(rootDir.resolve("photo.jpg"), new byte[] {1});
-        PictureApiHandler handler = createHandler(path -> false);
+        when(repository.moveToTrash("/photo.jpg")).thenReturn(Optional.of(false));
 
         // Act
         handler.handleDelete(exchange, "/photo.jpg");
@@ -161,13 +149,7 @@ class PictureApiHandlerTest {
     @Test
     void handleDelete_returns200WhenMoveToTrashSucceeds() throws IOException {
         // Arrange
-        Path imagePath = rootDir.resolve("photo.jpg");
-        Files.write(imagePath, new byte[] {1});
-        AtomicReference<Path> movedPath = new AtomicReference<>();
-        PictureApiHandler handler = createHandler(path -> {
-            movedPath.set(path);
-            return true;
-        });
+        when(repository.moveToTrash("/photo.jpg")).thenReturn(Optional.of(true));
 
         // Act
         handler.handleDelete(exchange, "/photo.jpg");
@@ -176,6 +158,5 @@ class PictureApiHandlerTest {
         String body = responseBodyOut.toString(StandardCharsets.UTF_8);
         assertThat(responseStatus.get()).isEqualTo(200);
         assertThat(body).contains("\"success\":true");
-        assertThat(movedPath.get()).isEqualTo(imagePath);
     }
 }
