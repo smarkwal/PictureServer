@@ -11,6 +11,8 @@ import net.markwalder.pictureserver.config.SettingsLoader;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.web.RequestRouter;
 import net.markwalder.pictureserver.web.api.ApiRouter;
+import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository;
 
 public final class Main {
 
@@ -34,7 +36,8 @@ public final class Main {
             System.exit(0);
         };
         PanicMonitor panicMonitor = new PanicMonitor(settings.panic(), sessionManager, shutdownAction);
-        ApiRouter apiRouter = new ApiRouter(settings, sessionManager, panicMonitor, shutdownAction);
+        PictureRepository repository = new FilesystemPictureRepository(settings);
+        ApiRouter apiRouter = new ApiRouter(settings, repository, sessionManager, panicMonitor, shutdownAction);
         RequestRouter requestRouter = new RequestRouter(panicMonitor, apiRouter);
 
         // Configure and start server

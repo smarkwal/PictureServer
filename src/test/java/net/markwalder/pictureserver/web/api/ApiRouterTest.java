@@ -22,6 +22,7 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
+import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +60,8 @@ class ApiRouterTest {
         Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
         sessionManager = new SessionManager();
         PanicMonitor panicMonitor = new PanicMonitor(PANIC_SETTINGS, sessionManager, () -> {});
-        router = new ApiRouter(settings, sessionManager, panicMonitor, () -> {});
+        FilesystemPictureRepository repository = new FilesystemPictureRepository(settings);
+        router = new ApiRouter(settings, repository, sessionManager, panicMonitor, () -> {});
 
         requestHeaders.set("User-Agent", UA);
         InetSocketAddress addr = new InetSocketAddress(InetAddress.getByName(IP), 0);

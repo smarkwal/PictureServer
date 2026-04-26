@@ -8,7 +8,6 @@ import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.security.ThreatEvent;
-import net.markwalder.pictureserver.web.service.FilesystemPictureRepository;
 import net.markwalder.pictureserver.web.service.PictureRepository;
 
 public final class ApiRouter {
@@ -22,10 +21,9 @@ public final class ApiRouter {
     private final ImageApiHandler imageHandler;
     private final ShutdownApiHandler shutdownHandler;
 
-    public ApiRouter(Settings settings, SessionManager sessionManager, PanicMonitor panicMonitor, Runnable shutdownAction) {
+    public ApiRouter(Settings settings, PictureRepository repository, SessionManager sessionManager, PanicMonitor panicMonitor, Runnable shutdownAction) {
         this.sessionManager = sessionManager;
         this.panicMonitor = panicMonitor;
-        PictureRepository repository = new FilesystemPictureRepository(settings);
         this.sessionHandler = new SessionApiHandler(sessionManager);
         this.authHandler = new AuthApiHandler(settings, sessionManager, panicMonitor);
         this.albumHandler = new AlbumApiHandler(repository, panicMonitor);
