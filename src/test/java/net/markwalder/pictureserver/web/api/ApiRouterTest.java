@@ -212,7 +212,9 @@ class ApiRouterTest {
     void handle_routesToAlbumHandlerWhenAuthenticated() throws IOException {
         // Arrange
         AlbumInfo albumInfo = new AlbumInfo(List.of(), Map.of(), List.of());
+        AlbumInfo emptyFavorites = new AlbumInfo(List.of(), Map.of(), List.of());
         when(repository.getAlbumInfo("")).thenReturn(Optional.of(albumInfo));
+        when(repository.getFavoritesAlbumInfo()).thenReturn(Optional.of(emptyFavorites));
         setupRequest("GET", "/api/albums");
         authenticateSession();
 
@@ -221,6 +223,62 @@ class ApiRouterTest {
 
         // Assert — request passes the auth guard and album handler returns 200
         assertThat(responseStatus.get()).isEqualTo(200);
+    }
+
+    @Test
+    void handle_returns401ForFavoritesAddWithoutAuth() throws IOException {
+        // Arrange
+        setupRequest("POST", "/api/favorites/photo.jpg");
+
+        // Act
+        router.handle(exchange);
+
+        // Assert
+        assertThat(responseStatus.get()).isEqualTo(401);
+    }
+
+    @Test
+    void handle_returns401ForFavoritesRemoveWithoutAuth() throws IOException {
+        // Arrange
+        setupRequest("DELETE", "/api/favorites/photo.jpg");
+
+        // Act
+        router.handle(exchange);
+
+        // Assert
+        assertThat(responseStatus.get()).isEqualTo(401);
+    }
+
+    @Test
+    void handle_routesToFavoritesHandlerForAddWhenAuthenticated() throws IOException {
+        // Arrange
+        when(repository.addFavorite("/photo.jpg")).thenReturn(Optional.of(true));
+        setupRequest("POST", "/api/favorites/photo.jpg");
+        authenticateSession();
+
+        // Act
+        router.handle(exchange);
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"favorite\":true");
+    }
+
+    @Test
+    void handle_routesToFavoritesHandlerForRemoveWhenAuthenticated() throws IOException {
+        // Arrange
+        when(repository.removeFavorite("/photo.jpg")).thenReturn(Optional.of(true));
+        setupRequest("DELETE", "/api/favorites/photo.jpg");
+        authenticateSession();
+
+        // Act
+        router.handle(exchange);
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"favorite\":false");
     }
 
     @Test

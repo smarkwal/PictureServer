@@ -157,6 +157,24 @@ body,
     color: #b91c1c;
 }
 
+.title-actions {
+    flex: 0 0 auto;
+}
+
+.favorite-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    color: #aaa;
+    padding: 0 0.25rem;
+    line-height: 1;
+}
+
+.favorite-btn-active {
+    color: #f5c518;
+}
+
 .page-center {
     min-height: 0;
 }

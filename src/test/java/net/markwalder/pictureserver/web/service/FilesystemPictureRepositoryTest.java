@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import net.markwalder.pictureserver.config.Settings;
@@ -89,6 +90,20 @@ class FilesystemPictureRepositoryTest {
         // Arrange
         Files.createDirectory(rootDir.resolve("Photos Library.photoslibrary"));
         Files.createDirectory(rootDir.resolve("Photo Booth Library"));
+        Files.createDirectory(rootDir.resolve("NormalAlbum"));
+
+        // Act
+        Optional<AlbumInfo> result = repository.getAlbumInfo("/");
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(result.get().albums()).containsExactly("NormalAlbum");
+    }
+
+    @Test
+    void getAlbumInfo_ignoresFavoritesFolder() throws IOException {
+        // Arrange
+        Files.createDirectory(rootDir.resolve("Favorites"));
         Files.createDirectory(rootDir.resolve("NormalAlbum"));
 
         // Act
@@ -379,5 +394,202 @@ class FilesystemPictureRepositoryTest {
         // Act & Assert
         assertThatThrownBy(() -> repository.openImage("/../etc/passwd"))
                 .isInstanceOf(SecurityException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // getFavoritesAlbumInfo
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getFavoritesAlbumInfo_returnsEmptyListWhenNoFavoritesFile() throws IOException {
+        // Act
+        Optional<AlbumInfo> result = repository.getFavoritesAlbumInfo();
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(result.get().pictures()).isEmpty();
+        assertThat(result.get().albums()).isEmpty();
+    }
+
+    @Test
+    void getFavoritesAlbumInfo_returnsOnlyExistingImages() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+        Files.write(rootDir.resolve(".favorites"), List.of("photo.jpg", "missing.jpg"), StandardCharsets.UTF_8);
+
+        // Act
+        Optional<AlbumInfo> result = repository.getFavoritesAlbumInfo();
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(result.get().pictures()).containsExactly("photo.jpg");
+    }
+
+    // -------------------------------------------------------------------------
+    // addFavorite
+    // -------------------------------------------------------------------------
+
+    @Test
+    void addFavorite_returnsTrueWhenNewlyAdded() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+
+        // Act
+        Optional<Boolean> result = repository.addFavorite("/photo.jpg");
+
+        // Assert
+        assertThat(result).contains(true);
+        assertThat(Files.readAllLines(rootDir.resolve(".favorites"), StandardCharsets.UTF_8))
+                .containsExactly("photo.jpg");
+    }
+
+    @Test
+    void addFavorite_returnsFalseWhenAlreadyPresent() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+        Files.write(rootDir.resolve(".favorites"), List.of("photo.jpg"), StandardCharsets.UTF_8);
+
+        // Act
+        Optional<Boolean> result = repository.addFavorite("/photo.jpg");
+
+        // Assert
+        assertThat(result).contains(false);
+    }
+
+    @Test
+    void addFavorite_returnsEmptyForNonImageFile() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("notes.txt"));
+
+        // Act
+        Optional<Boolean> result = repository.addFavorite("/notes.txt");
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void addFavorite_throwsSecurityExceptionForPathTraversal() {
+        // Act & Assert
+        assertThatThrownBy(() -> repository.addFavorite("/../etc/passwd"))
+                .isInstanceOf(SecurityException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // removeFavorite
+    // -------------------------------------------------------------------------
+
+    @Test
+    void removeFavorite_returnsTrueWhenRemoved() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+        Files.write(rootDir.resolve(".favorites"), List.of("photo.jpg"), StandardCharsets.UTF_8);
+
+        // Act
+        Optional<Boolean> result = repository.removeFavorite("/photo.jpg");
+
+        // Assert
+        assertThat(result).contains(true);
+        assertThat(Files.readAllLines(rootDir.resolve(".favorites"), StandardCharsets.UTF_8)).isEmpty();
+    }
+
+    @Test
+    void removeFavorite_returnsFalseWhenNotPresent() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+
+        // Act
+        Optional<Boolean> result = repository.removeFavorite("/photo.jpg");
+
+        // Assert
+        assertThat(result).contains(false);
+    }
+
+    @Test
+    void removeFavorite_returnsEmptyForNonImageFile() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("notes.txt"));
+
+        // Act
+        Optional<Boolean> result = repository.removeFavorite("/notes.txt");
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // isFavorite
+    // -------------------------------------------------------------------------
+
+    @Test
+    void isFavorite_returnsTrueWhenInFavorites() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+        Files.write(rootDir.resolve(".favorites"), List.of("photo.jpg"), StandardCharsets.UTF_8);
+
+        // Act
+        Optional<Boolean> result = repository.isFavorite("/photo.jpg");
+
+        // Assert
+        assertThat(result).contains(true);
+    }
+
+    @Test
+    void isFavorite_returnsFalseWhenNotInFavorites() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+
+        // Act
+        Optional<Boolean> result = repository.isFavorite("/photo.jpg");
+
+        // Assert
+        assertThat(result).contains(false);
+    }
+
+    @Test
+    void isFavorite_returnsEmptyForNonImageFile() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("notes.txt"));
+
+        // Act
+        Optional<Boolean> result = repository.isFavorite("/notes.txt");
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // moveToTrash (favorites integration)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void moveToTrash_removesFromFavoritesOnSuccess() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+        Files.write(rootDir.resolve(".favorites"), List.of("photo.jpg"), StandardCharsets.UTF_8);
+        Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
+        FilesystemPictureRepository repo = new FilesystemPictureRepository(settings, path -> true);
+
+        // Act
+        repo.moveToTrash("/photo.jpg");
+
+        // Assert
+        assertThat(Files.readAllLines(rootDir.resolve(".favorites"), StandardCharsets.UTF_8)).isEmpty();
+    }
+
+    @Test
+    void moveToTrash_doesNotModifyFavoritesWhenTrashFails() throws IOException {
+        // Arrange
+        Files.createFile(rootDir.resolve("photo.jpg"));
+        Files.write(rootDir.resolve(".favorites"), List.of("photo.jpg"), StandardCharsets.UTF_8);
+        Settings settings = new Settings(rootDir, 8080, "admin", "secret", PANIC_SETTINGS);
+        FilesystemPictureRepository repo = new FilesystemPictureRepository(settings, path -> false);
+
+        // Act
+        repo.moveToTrash("/photo.jpg");
+
+        // Assert
+        assertThat(Files.readAllLines(rootDir.resolve(".favorites"), StandardCharsets.UTF_8))
+                .containsExactly("photo.jpg");
     }
 }

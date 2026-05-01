@@ -37,7 +37,7 @@ export async function render(template, path, navigate, showLogin, signal) {
 
     const pictureTiles = data.pictures.map(name => {
         const picturePath = (isRoot ? '' : path) + '/' + name;
-        const src = '/api/images' + (isRoot ? '' : path) + '/' + encodeURIComponent(name);
+        const src = '/api/images' + encodeURIPath(picturePath);
         return `<div class="tile picture" data-path="${escapeAttr(picturePath)}">
             <div class="picture-thumb-box"><img class="picture-thumb" src="${escapeAttr(src)}" alt="${escapeAttr(name)}" loading="lazy"></div>
           </div>`;
@@ -95,6 +95,10 @@ export async function render(template, path, navigate, showLogin, signal) {
             template.setCenter('<div class="page-shutdown"><p>The server is shutting down...</p></div>', 'page-album-center');
         }
     }, { signal });
+}
+
+function encodeURIPath(path) {
+    return path.split('/').map(seg => seg ? encodeURIComponent(seg) : '').join('/');
 }
 
 function escapeHtml(str) {

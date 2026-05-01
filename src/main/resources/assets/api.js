@@ -49,6 +49,14 @@ export async function shutdown() {
     return request('POST', '/api/shutdown');
 }
 
+export async function addFavorite(path) {
+    return request('POST', '/api/favorites' + encodeURIPath(path));
+}
+
+export async function removeFavorite(path) {
+    return request('DELETE', '/api/favorites' + encodeURIPath(path));
+}
+
 function encodeURIPath(path) {
     return path.split('/').map(seg => seg ? encodeURIComponent(seg) : '').join('/');
 }

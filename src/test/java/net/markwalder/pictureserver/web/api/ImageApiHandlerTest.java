@@ -170,4 +170,23 @@ class ImageApiHandlerTest {
         assertThat(responseHeaders.getFirst("Last-Modified")).isNotBlank();
         assertThat(responseBodyOut.toByteArray()).containsExactly(content);
     }
+
+    @Test
+    void handle_stripsFavoritesPrefixAndServesRealFile() throws IOException {
+        // Arrange — request uses /Favorites/ prefix; repository is called with the real path
+        authenticateSession();
+        byte[] content = new byte[] {1, 2, 3};
+        long size = content.length;
+        long lastModified = 1_700_000_000_000L;
+        when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getImageInfo("/vacation/beach.jpg")).thenReturn(Optional.of(new ImageInfo(size, lastModified, "beach.jpg")));
+        when(repository.openImage("/vacation/beach.jpg")).thenReturn(Optional.of(new ByteArrayInputStream(content)));
+
+        // Act
+        handler.handle(exchange, "/Favorites/vacation/beach.jpg");
+
+        // Assert
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(responseBodyOut.toByteArray()).containsExactly(content);
+    }
 }

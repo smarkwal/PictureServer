@@ -32,6 +32,11 @@ final class ImageApiHandler {
             return;
         }
 
+        // Strip /Favorites/ prefix — serve the real file
+        if (pathSuffix.startsWith("/Favorites/")) {
+            pathSuffix = pathSuffix.substring("/Favorites".length());
+        }
+
         // Verify authentication
         Optional<String> cookie = HttpHelper.readCookie(exchange, sessionManager.cookieName());
         if (cookie.isEmpty() || !sessionManager.isAuthenticated(cookie.get(), HttpHelper.getSourceIp(exchange), HttpHelper.getUserAgent(exchange))) {

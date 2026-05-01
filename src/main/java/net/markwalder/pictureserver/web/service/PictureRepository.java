@@ -18,8 +18,14 @@ public interface PictureRepository {
     }
 
     // Returns empty if the path is not a valid album directory.
+    // Note: "/Favorites" is not valid here — use getFavoritesAlbumInfo() instead.
     // Throws SecurityException on path traversal attempt.
     Optional<AlbumInfo> getAlbumInfo(String webPath) throws IOException;
+
+    // Returns the virtual Favorites album: pictures = valid-existing favorites (relative paths
+    // without leading slash, e.g. "vacation/beach.jpg"), albums = [], albumFirstImages = {}.
+    // Missing files are filtered out silently.
+    Optional<AlbumInfo> getFavoritesAlbumInfo() throws IOException;
 
     // Returns empty if the path is not a valid image file.
     // Throws SecurityException on path traversal attempt.
@@ -30,6 +36,21 @@ public interface PictureRepository {
     // Returns Optional.of(true) on success.
     // Throws SecurityException on path traversal attempt.
     Optional<Boolean> moveToTrash(String webPath);
+
+    // Returns empty if webPath is not a valid image file.
+    // Returns of(true) if newly added, of(false) if already a favorite.
+    // Throws SecurityException on path traversal attempt.
+    Optional<Boolean> addFavorite(String webPath) throws IOException;
+
+    // Returns empty if webPath is not a valid image file.
+    // Returns of(true) if the entry was removed, of(false) if it was not present.
+    // Throws SecurityException on path traversal attempt.
+    Optional<Boolean> removeFavorite(String webPath) throws IOException;
+
+    // Returns empty if webPath is not a valid image file.
+    // Returns of(true) if in favorites, of(false) if not.
+    // Throws SecurityException on path traversal attempt.
+    Optional<Boolean> isFavorite(String webPath) throws IOException;
 
     // Returns empty if the path is not a valid image file.
     // Throws SecurityException on path traversal attempt.

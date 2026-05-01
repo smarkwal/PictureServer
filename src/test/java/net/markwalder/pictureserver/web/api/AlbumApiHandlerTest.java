@@ -114,8 +114,10 @@ class AlbumApiHandlerTest {
                 List.of("Cities", "Trips 2024"),
                 Map.of("Cities", "tokyo.png", "Trips 2024", "beach photo.jpg"),
                 List.of("cover.jpg"));
+        AlbumInfo emptyFavorites = new AlbumInfo(List.of(), Map.of(), List.of());
         when(exchange.getRequestMethod()).thenReturn("GET");
         when(repository.getAlbumInfo("/")).thenReturn(Optional.of(albumInfo));
+        when(repository.getFavoritesAlbumInfo()).thenReturn(Optional.of(emptyFavorites));
 
         // Act
         handler.handle(exchange, "/");
@@ -124,9 +126,46 @@ class AlbumApiHandlerTest {
         String body = responseBodyOut.toString(StandardCharsets.UTF_8);
         assertThat(responseStatus.get()).isEqualTo(200);
         assertThat(body).contains("\"path\":\"/\"");
-        assertThat(body).contains("\"albums\":[\"Cities\",\"Trips 2024\"]");
+        assertThat(body).contains("\"albums\":[\"Favorites\",\"Cities\",\"Trips 2024\"]");
         assertThat(body).contains("\"pictures\":[\"cover.jpg\"]");
         assertThat(body).contains("\"Cities\":\"/api/images/Cities/tokyo.png\"");
         assertThat(body).contains("\"Trips 2024\":\"/api/images/Trips%202024/beach%20photo.jpg\"");
+    }
+
+    @Test
+    void handle_includesFavoritesTilePreviewWhenFavoritesExist() throws IOException {
+        // Arrange
+        AlbumInfo albumInfo = new AlbumInfo(List.of(), Map.of(), List.of());
+        AlbumInfo favoritesInfo = new AlbumInfo(List.of(), Map.of(), List.of("vacation/beach.jpg"));
+        when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getAlbumInfo("/")).thenReturn(Optional.of(albumInfo));
+        when(repository.getFavoritesAlbumInfo()).thenReturn(Optional.of(favoritesInfo));
+
+        // Act
+        handler.handle(exchange, "/");
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"Favorites\":\"/api/images/vacation/beach.jpg\"");
+    }
+
+    @Test
+    void handle_returnsVirtualFavoritesAlbum() throws IOException {
+        // Arrange
+        AlbumInfo favoritesInfo = new AlbumInfo(List.of(), Map.of(), List.of("vacation/beach.jpg", "city/tower.jpg"));
+        when(exchange.getRequestMethod()).thenReturn("GET");
+        when(repository.getFavoritesAlbumInfo()).thenReturn(Optional.of(favoritesInfo));
+
+        // Act
+        handler.handle(exchange, "/Favorites");
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"path\":\"/Favorites\"");
+        assertThat(body).contains("\"albums\":[]");
+        assertThat(body).contains("vacation/beach.jpg");
+        assertThat(body).contains("city/tower.jpg");
     }
 }

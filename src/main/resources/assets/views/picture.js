@@ -45,6 +45,8 @@ export async function render(template, path, navigate, showLogin, signal) {
         parentPath,
         siblings: data.siblings,
         menuItems,
+        favorite: data.favorite,
+        realPath: data.realPath,
     };
 
     const currentThumb = template.centerEl.querySelector('.sidebar-thumb-current');
@@ -83,7 +85,23 @@ export async function render(template, path, navigate, showLogin, signal) {
                 details.removeAttribute('open');
             }
 
-            if (btn.dataset.action === 'delete') {
+            if (btn.dataset.action === 'favorite') {
+                try {
+                    if (viewState.favorite) {
+                        await api.removeFavorite(viewState.realPath);
+                        viewState.favorite = false;
+                    } else {
+                        await api.addFavorite(viewState.realPath);
+                        viewState.favorite = true;
+                    }
+                    const favBtn = viewState.template.titleBarEl.querySelector('#favorite-btn');
+                    if (favBtn) {
+                        favBtn.classList.toggle('favorite-btn-active', viewState.favorite);
+                    }
+                } catch (err) {
+                    alert('Could not update favorites: ' + err.message);
+                }
+            } else if (btn.dataset.action === 'delete') {
                 viewState.template.centerEl.querySelector('#delete-dialog')?.showModal();
             } else if (btn.dataset.action === 'logout') {
                 await api.logout().catch(() => {});
@@ -153,6 +171,8 @@ export async function update(path) {
     viewState.pictureName = data.name;
     viewState.parentPath = parentPath;
     viewState.siblings = data.siblings;
+    viewState.favorite = data.favorite;
+    viewState.realPath = data.realPath;
 
     renderPictureLayout(viewState.template, path, data, viewState.menuItems);
 
@@ -163,8 +183,12 @@ export async function update(path) {
 }
 
 function renderPictureLayout(template, path, data, menuItems) {
+    const favClass = data.favorite ? 'favorite-btn favorite-btn-active' : 'favorite-btn';
+    const actionsHtml = `<button class="${favClass}" id="favorite-btn" data-action="favorite" aria-label="Toggle favorite">★</button>`;
+
     template.setTitleBar(renderTitleBar({
         navigationHtml: renderBreadcrumb(path, data.name),
+        actionsHtml,
         menuHtml: renderMenu(menuItems),
     }));
 

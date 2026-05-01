@@ -3,7 +3,9 @@ package net.markwalder.pictureserver.web.service;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,7 +24,8 @@ public final class FilesystemPictureRepository implements PictureRepository {
 
     static final Set<String> IGNORED_FOLDER_NAMES = Set.of(
             "Photos Library.photoslibrary",
-            "Photo Booth Library"
+            "Photo Booth Library",
+            "Favorites"
     );
 
     @FunctionalInterface
@@ -113,7 +116,84 @@ public final class FilesystemPictureRepository implements PictureRepository {
         }
 
         // Move to trash
-        return Optional.of(trashMover.moveToTrash(pictureFsPath));
+        boolean moved = trashMover.moveToTrash(pictureFsPath);
+
+        // Remove from favorites if moved successfully
+        if (moved) {
+            String relativePath = toRelativePath(pictureFsPath);
+            synchronized (this) {
+                List<String> lines = readFavoritesRaw();
+                if (lines.remove(relativePath)) {
+                    writeFavoritesRaw(lines);
+                }
+            }
+        }
+
+        return Optional.of(moved);
+    }
+
+    @Override
+    public synchronized Optional<AlbumInfo> getFavoritesAlbumInfo() throws IOException {
+        // Read and filter favorites to only existing image files
+        List<String> raw = readFavoritesRaw();
+        List<String> valid = new ArrayList<>();
+        for (String entry : raw) {
+            Path fsPath = settings.rootDirectory().resolve(entry);
+            if (Files.isRegularFile(fsPath) && ImageTypes.isImageFile(fsPath.getFileName().toString())) {
+                valid.add(entry);
+            }
+        }
+        return Optional.of(new AlbumInfo(List.of(), Map.of(), valid));
+    }
+
+    @Override
+    public synchronized Optional<Boolean> addFavorite(String webPath) throws IOException {
+        // Resolve and validate path
+        Path fsPath = PathSafety.resolveSafePath(webPath, settings.rootDirectory());
+        if (!Files.isRegularFile(fsPath) || !ImageTypes.isImageFile(fsPath.getFileName().toString())) {
+            return Optional.empty();
+        }
+
+        // Add to favorites if not already present
+        String relativePath = toRelativePath(fsPath);
+        List<String> lines = readFavoritesRaw();
+        if (lines.contains(relativePath)) {
+            return Optional.of(false);
+        }
+        lines.add(relativePath);
+        writeFavoritesRaw(lines);
+        return Optional.of(true);
+    }
+
+    @Override
+    public synchronized Optional<Boolean> removeFavorite(String webPath) throws IOException {
+        // Resolve and validate path
+        Path fsPath = PathSafety.resolveSafePath(webPath, settings.rootDirectory());
+        if (!Files.isRegularFile(fsPath) || !ImageTypes.isImageFile(fsPath.getFileName().toString())) {
+            return Optional.empty();
+        }
+
+        // Remove from favorites
+        String relativePath = toRelativePath(fsPath);
+        List<String> lines = readFavoritesRaw();
+        if (!lines.remove(relativePath)) {
+            return Optional.of(false);
+        }
+        writeFavoritesRaw(lines);
+        return Optional.of(true);
+    }
+
+    @Override
+    public synchronized Optional<Boolean> isFavorite(String webPath) throws IOException {
+        // Resolve and validate path
+        Path fsPath = PathSafety.resolveSafePath(webPath, settings.rootDirectory());
+        if (!Files.isRegularFile(fsPath) || !ImageTypes.isImageFile(fsPath.getFileName().toString())) {
+            return Optional.empty();
+        }
+
+        // Check favorites list
+        String relativePath = toRelativePath(fsPath);
+        return Optional.of(readFavoritesRaw().contains(relativePath));
     }
 
     @Override
@@ -141,6 +221,29 @@ public final class FilesystemPictureRepository implements PictureRepository {
 
         // Open image stream
         return Optional.of(Files.newInputStream(imageFsPath));
+    }
+
+    private String toRelativePath(Path fsPath) {
+        return settings.rootDirectory().relativize(fsPath).toString();
+    }
+
+    private List<String> readFavoritesRaw() {
+        Path favoritesFile = settings.rootDirectory().resolve(".favorites");
+        try {
+            return new ArrayList<>(Files.readAllLines(favoritesFile, StandardCharsets.UTF_8));
+        } catch (NoSuchFileException ignored) {
+            return new ArrayList<>();
+        } catch (IOException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private void writeFavoritesRaw(List<String> lines) {
+        Path favoritesFile = settings.rootDirectory().resolve(".favorites");
+        try {
+            Files.write(favoritesFile, lines, StandardCharsets.UTF_8);
+        } catch (IOException ignored) {
+        }
     }
 
     private static boolean moveToTrashWithDesktop(Path imagePath) {

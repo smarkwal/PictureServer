@@ -19,6 +19,7 @@ public final class ApiRouter {
     private final AlbumApiHandler albumHandler;
     private final PictureApiHandler pictureHandler;
     private final ImageApiHandler imageHandler;
+    private final FavoritesApiHandler favoritesHandler;
     private final ShutdownApiHandler shutdownHandler;
 
     public ApiRouter(Settings settings, PictureRepository repository, SessionManager sessionManager, PanicMonitor panicMonitor, Runnable shutdownAction) {
@@ -29,6 +30,7 @@ public final class ApiRouter {
         this.albumHandler = new AlbumApiHandler(repository, panicMonitor);
         this.pictureHandler = new PictureApiHandler(repository, panicMonitor);
         this.imageHandler = new ImageApiHandler(repository, sessionManager, panicMonitor);
+        this.favoritesHandler = new FavoritesApiHandler(repository, panicMonitor);
         this.shutdownHandler = new ShutdownApiHandler(shutdownAction);
     }
 
@@ -76,6 +78,16 @@ public final class ApiRouter {
             if ("GET".equals(method) && path.startsWith("/api/images")) {
                 String suffix = path.substring("/api/images".length());
                 imageHandler.handle(exchange, suffix);
+                return;
+            }
+            if ("POST".equals(method) && path.startsWith("/api/favorites")) {
+                String suffix = path.substring("/api/favorites".length());
+                favoritesHandler.handleAdd(exchange, suffix);
+                return;
+            }
+            if ("DELETE".equals(method) && path.startsWith("/api/favorites")) {
+                String suffix = path.substring("/api/favorites".length());
+                favoritesHandler.handleRemove(exchange, suffix);
                 return;
             }
             if ("POST".equals(method) && "/api/shutdown".equals(path)) {

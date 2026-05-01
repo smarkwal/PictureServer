@@ -22,7 +22,8 @@ export function createPageTemplate(appEl) {
     };
 }
 
-export function renderTitleBar({ navigationHtml, menuHtml = '' }) {
+export function renderTitleBar({ navigationHtml, actionsHtml = '', menuHtml = '' }) {
+    const actionsSlot = actionsHtml ? `<div class="title-actions">${actionsHtml}</div>` : '';
     const menuSlot = menuHtml ? `<div class="title-menu">${menuHtml}</div>` : '';
 
     return `
@@ -30,5 +31,6 @@ export function renderTitleBar({ navigationHtml, menuHtml = '' }) {
           <img class="title-icon" src="/assets/icon.svg" alt="Picture Server">
           <div class="title-navigation">${navigationHtml}</div>
         </div>
+        ${actionsSlot}
         ${menuSlot}`;
 }

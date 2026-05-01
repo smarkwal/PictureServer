@@ -14,12 +14,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.markwalder.pictureserver.auth.SessionManager;
 import net.markwalder.pictureserver.config.Settings.PanicSettings;
 import net.markwalder.pictureserver.security.PanicMonitor;
 import net.markwalder.pictureserver.web.service.PictureRepository;
+import net.markwalder.pictureserver.web.service.PictureRepository.AlbumInfo;
 import net.markwalder.pictureserver.web.service.PictureRepository.PictureInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,6 +99,7 @@ class PictureApiHandlerTest {
         // Arrange
         PictureInfo pictureInfo = new PictureInfo(List.of("a.jpg", "b photo.jpg"));
         when(repository.getPictureInfo("/My%20Album/b%20photo.jpg")).thenReturn(Optional.of(pictureInfo));
+        when(repository.isFavorite("/My%20Album/b%20photo.jpg")).thenReturn(Optional.of(false));
 
         // Act
         handler.handleGet(exchange, "/My%20Album/b%20photo.jpg");
@@ -108,6 +111,57 @@ class PictureApiHandlerTest {
         assertThat(body).contains("\"src\":\"/api/images/My%20Album/b%20photo.jpg\"");
         assertThat(body).contains("/My%20Album/a.jpg");
         assertThat(body).contains("/My%20Album/b%20photo.jpg");
+        assertThat(body).contains("\"favorite\":false");
+    }
+
+    @Test
+    void handleGet_returnsFavoriteTrueWhenPictureIsFavorited() throws IOException {
+        // Arrange
+        PictureInfo pictureInfo = new PictureInfo(List.of("photo.jpg"));
+        when(repository.getPictureInfo("/photo.jpg")).thenReturn(Optional.of(pictureInfo));
+        when(repository.isFavorite("/photo.jpg")).thenReturn(Optional.of(true));
+
+        // Act
+        handler.handleGet(exchange, "/photo.jpg");
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"favorite\":true");
+    }
+
+    @Test
+    void handleGet_returnsFavoritesPictureWithAllFavoritesAsSiblings() throws IOException {
+        // Arrange
+        PictureInfo pictureInfo = new PictureInfo(List.of("beach.jpg"));
+        AlbumInfo favoritesInfo = new AlbumInfo(List.of(), Map.of(), List.of("vacation/beach.jpg", "city/tower.jpg"));
+        when(repository.getPictureInfo("/vacation/beach.jpg")).thenReturn(Optional.of(pictureInfo));
+        when(repository.getFavoritesAlbumInfo()).thenReturn(Optional.of(favoritesInfo));
+
+        // Act
+        handler.handleGet(exchange, "/Favorites/vacation/beach.jpg");
+
+        // Assert
+        String body = responseBodyOut.toString(StandardCharsets.UTF_8);
+        assertThat(responseStatus.get()).isEqualTo(200);
+        assertThat(body).contains("\"path\":\"/Favorites/vacation/beach.jpg\"");
+        assertThat(body).contains("\"name\":\"beach.jpg\"");
+        assertThat(body).contains("\"src\":\"/api/images/Favorites/vacation/beach.jpg\"");
+        assertThat(body).contains("\"favorite\":true");
+        assertThat(body).contains("/Favorites/vacation/beach.jpg");
+        assertThat(body).contains("/Favorites/city/tower.jpg");
+    }
+
+    @Test
+    void handleGet_returns404ForMissingFavoritesPicture() throws IOException {
+        // Arrange
+        when(repository.getPictureInfo("/vacation/beach.jpg")).thenReturn(Optional.empty());
+
+        // Act
+        handler.handleGet(exchange, "/Favorites/vacation/beach.jpg");
+
+        // Assert
+        assertThat(responseStatus.get()).isEqualTo(404);
     }
 
     @Test

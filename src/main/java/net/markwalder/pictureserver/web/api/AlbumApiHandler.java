@@ -2,6 +2,7 @@ package net.markwalder.pictureserver.web.api;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,14 @@ final class AlbumApiHandler {
 
         String albumWebPath = WebPaths.normalizeWebPath(pathSuffix);
 
+        // Serve virtual Favorites album
+        if ("/Favorites".equals(albumWebPath)) {
+            Optional<AlbumInfo> favoritesInfo = repository.getFavoritesAlbumInfo();
+            AlbumInfo info = favoritesInfo.get();
+            JsonHelper.sendJson(exchange, 200, new AlbumResponse("/Favorites", List.of(), Map.of(), info.pictures()));
+            return;
+        }
+
         // Fetch album info
         Optional<AlbumInfo> albumInfo;
         try {
@@ -63,6 +72,23 @@ final class AlbumApiHandler {
             albumPreviews.put(album, "/api/images" + WebPaths.encodeWebPath(previewPath));
         });
 
-        JsonHelper.sendJson(exchange, 200, new AlbumResponse(encodedAlbumWebPath, info.albums(), albumPreviews, info.pictures()));
+        // Prepend virtual Favorites album on home page
+        List<String> albums = info.albums();
+        if ("/".equals(albumWebPath)) {
+            albums = new ArrayList<>(info.albums());
+            albums.add(0, "Favorites");
+            try {
+                Optional<AlbumInfo> favoritesInfo = repository.getFavoritesAlbumInfo();
+                List<String> favPictures = favoritesInfo.get().pictures();
+                if (!favPictures.isEmpty()) {
+                    String previewUrl = "/api/images" + WebPaths.encodeWebPath(favPictures.get(0));
+                    albumPreviews.put("Favorites", previewUrl);
+                }
+            } catch (IOException ignored) {
+                // no preview if favorites file is unreadable
+            }
+        }
+
+        JsonHelper.sendJson(exchange, 200, new AlbumResponse(encodedAlbumWebPath, albums, albumPreviews, info.pictures()));
     }
 }
